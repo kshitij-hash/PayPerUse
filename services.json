@@ -1,0 +1,88 @@
+{
+  "services": [
+    {
+      "id": "service-001",
+      "name": "Text Generation API",
+      "description": "Generates text based on prompts using various language models",
+      "endpoint": "https://api.example.com/text-generation",
+      "pricing": {
+        "amount": "0.005",
+        "currency": "USDC"
+      },
+      "models": ["gpt-4", "gpt-3.5", "claude-2"],
+      "provider": "OpenAI"
+    },
+    {
+      "id": "service-002",
+      "name": "Image Generation API",
+      "description": "Creates images from text descriptions",
+      "endpoint": "https://api.example.com/image-generation",
+      "pricing": {
+        "amount": "0.02",
+        "currency": "USDC"
+      },
+      "models": ["dall-e-3", "stable-diffusion", "midjourney"],
+      "provider": "OpenAI"
+    },
+    {
+      "id": "service-003",
+      "name": "Code Analysis API",
+      "description": "Analyzes code for bugs, improvements, and explanations",
+      "endpoint": "https://api.example.com/code-analysis",
+      "pricing": {
+        "amount": "0.01",
+        "currency": "USDC"
+      },
+      "languages": ["javascript", "python", "java", "go", "rust"],
+      "provider": "CodeAnalytics"
+    },
+    {
+      "id": "service-004",
+      "name": "Data Processing API",
+      "description": "Processes and analyzes data sets",
+      "endpoint": "https://api.example.com/data-processing",
+      "pricing": {
+        "amount": "0.015",
+        "currency": "USDC"
+      },
+      "formats": ["csv", "json", "xml", "parquet"],
+      "provider": "DataWizard"
+    },
+    {
+      "id": "summarize",
+      "name": "Summarizer",
+      "description": "Summarizes text using Google's Gemini AI",
+      "endpoint": "/api/summarize",
+      "pricing": {
+        "amount": "0.05",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini"
+    },
+    {
+      "id": "translate",
+      "name": "Translator",
+      "description": "Translates text to different languages using Google's Gemini AI",
+      "endpoint": "/api/translate",
+      "pricing": {
+        "amount": "0.05",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini"
+    },
+    {
+      "id": "generate-image",
+      "name": "Image Generator",
+      "description": "Generates images from text descriptions using Google's Gemini AI",
+      "endpoint": "/api/generate-image",
+      "pricing": {
+        "amount": "0.10",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "agents": [
+    {
+      "id": "agent-001",
+      "name": "Basic Text Processing Agent",
+      "description": "Processes text inputs and returns formatted results",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "service-001",
+          "config": {
+            "model": "gpt-4",
+            "temperature": 0.7
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.01",
+        "currency": "USDC"
+      }
+    },
+    {
+      "id": "agent-002",
+      "name": "Image Generation Agent",
+      "description": "Generates images based on text prompts",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "service-001",
+          "config": {
+            "model": "gpt-4",
+            "temperature": 0.5
+          }
+        },
+        {
+          "id": "step-002",
+          "serviceId": "service-002",
+          "config": {
+            "model": "dall-e-3",
+            "quality": "standard"
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.05",
+        "currency": "USDC"
+      }
+    },
+    {
+      "id": "agent-003",
+      "name": "Code Assistant Agent",
+      "description": "Helps with coding tasks and provides code explanations",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "service-001",
+          "config": {
+            "model": "gpt-4",
+            "temperature": 0.3,
+            "context": "programming"
+          }
+        },
+        {
+          "id": "step-002",
+          "serviceId": "service-003",
+          "config": {
+            "language": "auto-detect"
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.02",
+        "currency": "USDC"
+      }
+    }
+  ]
+}

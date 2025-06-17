@@ -1,0 +1,157 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { CdpClient } from '@coinbase/cdp-sdk';
+import axios from 'axios';
+import { withPaymentInterceptor } from 'x402-axios';
+import { LocalAccount } from 'viem';
+import { toAccount } from 'viem/accounts';
+
+// Initialize CDP client with server-side environment variables
+const cdpClient = new CdpClient({
+  apiKeyId: process.env.CDP_API_KEY_ID as string,
+  apiKeySecret: process.env.CDP_API_KEY_SECRET as string,
+  walletSecret: process.env.CDP_WALLET_SECRET as string,
+});
+
+/**
+ * Server-side proxy for x402 paid API calls
+ * This handles the CDP authentication and x402 payment flow on the server
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Parse the request body
+    const { walletId, endpoint, method, data, walletAddress } = await request.json();
+    
+    if (!walletId || !endpoint || !method) {
+      return NextResponse.json(
+        { error: 'Missing required parameters' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`x402-proxy - Starting API call to ${endpoint} with wallet ${walletId}`);
+    
+    // Get the wallet account from CDP
+    const serverAccount = await cdpClient.evm.getAccount({
+      name: walletId,
+      address: walletAddress as `0x${string}` | undefined,
+    });
+
+    // Convert to viem account format
+    const account = toAccount<LocalAccount>(serverAccount as unknown as LocalAccount);
+    
+    // Create axios instance with payment interceptor
+    const axiosInstance = axios.create({ baseURL: process.env.VERCEL_URL || 'http://localhost:3000' });
+    
+    // Add a custom interceptor to convert payment header names to uppercase
+    axiosInstance.interceptors.request.use(config => {
+      // Check if headers exist
+      if (config.headers) {
+        const headers = config.headers as Record<string, string>;
+        
+        // Log headers if needed for debugging
+        // console.log('x402-proxy - Headers before conversion:', JSON.stringify(headers));
+        
+        // Look for lowercase payment headers and convert them to uppercase
+        const paymentHeaders = ['x-payment', 'x-payment-signature', 'x-payment-timestamp', 'x-payment-address'];
+        
+        for (const header of paymentHeaders) {
+          if (headers[header]) {
+            // Convert to uppercase and set the new header
+            const upperCaseHeader = header.toUpperCase();
+            headers[upperCaseHeader] = headers[header];
+            
+            // Remove the lowercase header
+            delete headers[header];
+            
+            console.log(`x402-proxy - Converted header ${header} to ${upperCaseHeader}`);
+          }
+        }
+        
+        // Simplified logging
+        if (headers['X-PAYMENT']) {
+          console.log('x402-proxy - X-PAYMENT header is present after conversion');
+        }
+      }
+      
+      return config;
+    });
+    
+    // Create client with payment interceptor
+    // Initialize payment interceptor
+    
+    // Create a custom axios interceptor to log 402 responses
+    axiosInstance.interceptors.response.use(
+      response => response,
+      async (error) => {
+        if (error.response && error.response.status === 402) {
+          console.log('x402-proxy - Received 402 response');
+        }
+        return Promise.reject(error);
+      }
+    );
+    
+    const client = withPaymentInterceptor(
+      axiosInstance,
+      account
+    );
+    
+    // Add another interceptor after withPaymentInterceptor to log retry attempts
+    client.interceptors.request.use(config => {
+      // Check if the config has the __is402Retry property
+      // Using a type guard approach instead of direct casting
+      const hasRetryFlag = (obj: unknown): obj is { __is402Retry: boolean } => 
+        typeof obj === 'object' && obj !== null && '__is402Retry' in obj;
+      
+      if (hasRetryFlag(config) && config.__is402Retry) {
+        // Ensure X-PAYMENT header is uppercase in retry requests
+        if (config.headers && !config.headers['X-PAYMENT'] && config.headers['x-payment']) {
+          config.headers['X-PAYMENT'] = config.headers['x-payment'];
+          delete config.headers['x-payment'];
+          console.log('x402-proxy - Ensured X-PAYMENT header is uppercase in retry');
+        }
+      }
+      return config;
+    });
+    
+    // Make the API call with the payment interceptor
+    let response;
+    if (method === 'GET') {
+      response = await client.get(endpoint, { params: data });
+    } else if (method === 'POST') {
+      response = await client.post(endpoint, data);
+    } else if (method === 'PUT') {
+      response = await client.put(endpoint, data);
+    } else if (method === 'DELETE') {
+      response = await client.delete(endpoint, { data });
+    } else {
+      return NextResponse.json(
+        { error: `Unsupported method: ${method}` },
+        { status: 400 }
+      );
+    }
+    
+    console.log(`x402-proxy - Successful response from ${endpoint}`);
+    
+    // Return the response data
+    return NextResponse.json(response.data);
+  } catch (error) {
+    const err = error as { response?: { status: number; data: unknown }; message: string };
+    console.error('x402-proxy - Error:', error);
+    
+    // Provide more detailed error information
+    if (err.response) {
+      console.error('Response status:', err.response.status);
+      console.error('Response data:', err.response.data);
+      
+      return NextResponse.json(
+        { error: `API call failed with status ${err.response.status}`, details: err.response.data },
+        { status: err.response.status }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: `API call failed: ${err.message}` },
+      { status: 500 }
+    );
+  }
+}
