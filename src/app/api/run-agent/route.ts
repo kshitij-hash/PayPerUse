@@ -40,8 +40,8 @@ interface Service {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get payment header from the original request
-    const paymentHeader = request.headers.get('X-PAYMENT') || request.headers.get('x-payment');
+    // We no longer need to extract the payment header directly
+    // as we're using the x402-proxy for payment handling
     
     const body = await request.json();
     const { agentId, input, config = {}, privateKey } = body;
@@ -133,20 +133,53 @@ export async function POST(request: NextRequest) {
         requestPath = '/';
       }
       
-      // For internal endpoints, we need to forward the payment header but not use the payment interceptor
-      // as that would cause double-payment issues
-      if (isRelativeEndpoint) {
-        // For internal endpoints, just create a regular axios instance with the payment header
-        const api = axios.create({
-          baseURL,
-          headers: paymentHeader ? { 'X-PAYMENT': paymentHeader } : {}
-        });
+      try {
+        let response;
         
-        // Make the request
-        const response = await api.post(requestPath, {
-          input: currentInput,
-          config: step.config
-        });
+        if (isRelativeEndpoint) {
+          // For internal endpoints, use the x402-proxy to handle payment automatically
+          // This will handle 402 responses and make payments as needed
+          console.log(`Using x402-proxy for internal endpoint: ${service.endpoint}`);
+          
+          // Create a fetch request to the x402-proxy endpoint
+          const proxyResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/x402-proxy`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              walletId: privateKey ? 'custom-wallet' : 'default-wallet',  // Use appropriate wallet ID
+              endpoint: service.endpoint,  // The internal endpoint we want to call
+              method: 'POST',
+              data: {  // The data to send to the endpoint
+                input: currentInput,
+                config: step.config
+              },
+              walletAddress: account.address  // Pass the wallet address if available
+            }),
+          });
+          
+          if (!proxyResponse.ok) {
+            const errorData = await proxyResponse.json();
+            throw new Error(`API call failed with status ${proxyResponse.status}: ${JSON.stringify(errorData)}`);
+          }
+          
+          response = { data: await proxyResponse.json() };
+        } else {
+          // For external endpoints, use the payment interceptor as before
+          const api = withPaymentInterceptor(
+            axios.create({
+              baseURL,
+            }),
+            account
+          );
+          
+          // Make the request
+          response = await api.post(requestPath, {
+            input: currentInput,
+            config: step.config
+          });
+        }
         
         // Store the result
         stepResults.push({
@@ -157,32 +190,14 @@ export async function POST(request: NextRequest) {
         });
         
         // Update the input for the next step
-        currentInput = response.data.output;
-      } else {
-        // For external endpoints, use the payment interceptor
-        const api = withPaymentInterceptor(
-          axios.create({
-            baseURL,
-          }),
-          account
+        currentInput = response.data.output || response.data;
+        
+      } catch (error) {
+        console.error(`Error executing step ${step.id} with service ${service.id}:`, error);
+        return NextResponse.json(
+          { error: `Failed to execute step ${step.id}`, details: error instanceof Error ? error.message : String(error) },
+          { status: 500 }
         );
-        
-        // Make the request
-        const response = await api.post(requestPath, {
-          input: currentInput,
-          config: step.config
-        });
-        
-        // Store the result
-        stepResults.push({
-          stepId: step.id,
-          serviceId: step.serviceId,
-          serviceName: service.name,
-          result: response.data
-        });
-        
-        // Update the input for the next step
-        currentInput = response.data.output;
       }
     }
 
