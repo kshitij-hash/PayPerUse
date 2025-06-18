@@ -40,6 +40,34 @@ export const middleware = paymentMiddleware(
       config: {
         description: 'Vision analysis using Gemini AI'
       }
+    },
+    '/api/write': {
+      price: '$0.05',
+      network: "base-sepolia",
+      config: {
+        description: 'Content writing service using Gemini AI'
+      }
+    },
+    '/api/code-assistant': {
+      price: '$0.07',
+      network: "base-sepolia",
+      config: {
+        description: 'Code assistance service using Gemini AI'
+      }
+    },
+    '/api/research-assistant': {
+      price: '$0.08',
+      network: "base-sepolia",
+      config: {
+        description: 'Research assistant service using Gemini AI'
+      }
+    },
+    '/api/poetry-generator': {
+      price: '$0.06',
+      network: "base-sepolia",
+      config: {
+        description: 'Poetry generation service using Gemini AI'
+      }
     }
   },
   {
@@ -50,10 +78,15 @@ export const middleware = paymentMiddleware(
 // Configure which paths the middleware should run on
 export const config = {
   matcher: [
+    '/api/poetry-generator/:path*',
     '/api/summarize/:path*',
     '/api/translate/:path*',
     '/api/generate-image/:path*',
     '/api/text-generation/:path*',
     '/api/vision-analysis/:path*',
+    '/api/write/:path*',
+    '/api/code-assistant/:path*',
+    '/api/research-assistant/:path*',
+    '/api/poetry-generator/:path*',
   ]
 };

@@ -1,6 +1,45 @@
 {
   "agents": [
     {
+      "id": "agent-007",
+      "name": "Poetry Generator Agent",
+      "description": "Creates beautiful poetry in various styles and moods based on your chosen topic",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "poetry-generator",
+          "config": {
+            "style": "free verse",
+            "mood": "reflective"
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.06",
+        "currency": "USDC"
+      }
+    },
+    {
+      "id": "agent-006",
+      "name": "Research Assistant Agent",
+      "description": "AI-Powered Research Assistant that generates outlines, questions, subtopics, and more for academic research",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "research-assistant",
+          "config": {
+            "depth": "standard",
+            "focus": "general",
+            "format": "academic"
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.08",
+        "currency": "USDC"
+      }
+    },
+    {
       "id": "agent-001",
       "name": "Text Generation Agent",
       "description": "Generates text using Google Gemini",
