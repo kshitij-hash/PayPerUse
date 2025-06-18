@@ -10,7 +10,17 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini"
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "input",
+          "label": "Text Prompt",
+          "type": "textarea",
+          "placeholder": "Enter your text prompt...",
+          "required": true,
+          "rows": 5
+        }
+      ]
     },
     {
       "id": "gemini-vision",
@@ -22,7 +32,24 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini"
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "imageUrl",
+          "label": "Image URL",
+          "type": "text",
+          "placeholder": "Enter the URL of the image...",
+          "required": true
+        },
+        {
+          "name": "prompt",
+          "label": "Prompt (Optional)",
+          "type": "textarea",
+          "placeholder": "Enter an optional prompt for image analysis...",
+          "required": false,
+          "rows": 3
+        }
+      ]
     },
     {
       "id": "summarize",

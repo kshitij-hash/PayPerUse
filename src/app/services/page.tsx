@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image"; // Import next/image
 import { Footer } from "@/components/footer";
 import { useCdpWallet } from "@/context/CdpWalletContext";
 
@@ -36,6 +37,10 @@ interface ServiceModalProps {
   onClose: () => void;
 }
 
+interface ImageApiResponse {
+  result: string;
+}
+
 // Service Modal Component
 function ServiceModal({ service, onClose }: ServiceModalProps) {
   // State for form inputs and results
@@ -45,6 +50,7 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
   }
   const [formInputs, setFormInputs] = useState<FormInputs>({});
   const [result, setResult] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null); // Added for image display
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { wallet, callPaidApiWithWallet } = useCdpWallet();
@@ -60,6 +66,9 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
     } else {
       setFormInputs({ input: "" });
     }
+    setResult(null); // Reset previous results
+    setImageBase64(null); // Reset previous image
+    setError(null); // Reset previous errors
   }, [service]);
 
   // Handle input changes
@@ -82,6 +91,7 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setImageBase64(null); // Reset image on new submission
 
     try {
       // Process form data based on input types
@@ -103,13 +113,37 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
       }
 
       // Call the service API using the wallet context
-      const response = await callPaidApiWithWallet(
+      const apiResponse = await callPaidApiWithWallet(
         service.endpoint,
         "POST",
         payload
       );
 
-      setResult(JSON.stringify(response, null, 2));
+      if (apiResponse == null) { // Checks for both null and undefined
+        setError("Failed to get a response from the service. The response was null or undefined.");
+        setResult(null);
+        setImageBase64(null); // Clear image if the response is null
+        // Consider setting loading state to false here if applicable, e.g., setLoading(false);
+      } else if (service.id === "generate-image") {
+        if (typeof apiResponse === 'object' && apiResponse !== null) {
+          if ('result' in apiResponse && typeof (apiResponse as { result: unknown }).result === 'string') {
+            setImageBase64((apiResponse as ImageApiResponse).result); // apiResponse is the full data URI
+            setResult(null); // Don't show raw data URI in the JSON result area
+          } else {
+            setError("Image generator response is missing 'result' string property.");
+            setResult(JSON.stringify(apiResponse, null, 2)); // Show the problematic response
+            setImageBase64(null);
+          }
+        } else {
+          setError("Image generator returned an unexpected response. Expected a data URI string (e.g., data:image/jpeg;base64,...).");
+          // Show what was received if it's not the expected format
+          setResult(typeof apiResponse === 'object' ? JSON.stringify(apiResponse, null, 2) : String(apiResponse));
+          setImageBase64(null);
+        }
+      } else {
+        setResult(JSON.stringify(apiResponse, null, 2));
+        setImageBase64(null); // Ensure image is cleared for non-image services
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to call service");
     } finally {
@@ -284,7 +318,20 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
           </div>
         )}
 
-        {result && (
+        {/* Conditional rendering for image or text result */}
+        {service.id === "generate-image" && imageBase64 ? (
+          <div className="mt-4">
+            <h3 className="font-medium mb-2">Generated Image:</h3>
+            <div className="relative w-full max-w-md mx-auto aspect-square border border-gray-700 rounded overflow-hidden">
+              <Image 
+                src={imageBase64} // imageBase64 now holds the full data URI
+                alt="Generated image" 
+                layout="fill"
+                objectFit="contain"
+              />
+            </div>
+          </div>
+        ) : result && (
           <div className="mt-4">
             <h3 className="font-medium mb-2">Result:</h3>
             <div className="p-3 bg-gray-700 rounded overflow-x-auto">
