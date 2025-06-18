@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import CdpWalletManager from '@/components/CdpWalletManager';
 import { callPaidApi } from '@/lib/x402Client';
@@ -48,23 +48,6 @@ export default function WalletDemoPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeService, setActiveService] = useState<'summarize' | 'write' | 'translate' | 'generate-image' | 'agents' | 'code-assistant' | 'research-assistant' | 'poetry-generator'>('summarize');
   
-  // State for agents
-  const [agents, setAgents] = useState<Array<{id: string, name: string}>>([]);
-  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
-  const [agentInput, setAgentInput] = useState<string>('');
-  const [agentResult, setAgentResult] = useState<{
-    agentId?: string;
-    agentName?: string;
-    input?: string;
-    output?: string;
-    steps?: Array<{
-      stepId: string;
-      serviceId: string;
-      serviceName: string;
-      result: Record<string, unknown>;
-    }>;
-  } | null>(null);
-
   // State for code assistant inputs
   const [codeQuery, setCodeQuery] = useState<string>('');
   const [codeSnippet, setCodeSnippet] = useState<string>('');
@@ -80,52 +63,6 @@ export default function WalletDemoPage() {
   const [poetryTopic, setPoetryTopic] = useState<string>('');
   const [poetryStyle, setPoetryStyle] = useState<string>('free verse');
   const [poetryMood, setPoetryMood] = useState<string>('reflective');
-
-  /**
-   * Load available agents from the server
-   */
-  useEffect(() => {
-    const fetchAgents = async () => {
-      try {
-        console.log('Fetching agents from /api/agents...');
-        const response = await fetch('/api/agents');
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response from /api/agents:', response.status, errorText);
-          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Agents data received:', data);
-        
-        if (!data.agents || !Array.isArray(data.agents)) {
-          throw new Error('Invalid agents data format');
-        }
-        
-        const agentList = data.agents.map((agent: { id: string; name: string }) => ({
-          id: agent.id,
-          name: agent.name
-        }));
-        
-        console.log('Setting agents list:', agentList);
-        setAgents(agentList);
-        
-        if (agentList.length > 0) {
-          console.log('Setting selected agent ID to:', agentList[0].id);
-          setSelectedAgentId(agentList[0].id);
-        } else {
-          console.warn('No agents available');
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Failed to load agents:', errorMessage, err);
-        setError(`Failed to load agents: ${errorMessage}`);
-      }
-    };
-    
-    fetchAgents();
-  }, []);
 
   /**
    * Call the appropriate x402-paid API based on the active service
@@ -151,36 +88,6 @@ export default function WalletDemoPage() {
       };
       
       switch (activeService) {
-        case 'agents':
-          if (!agentInput.trim()) {
-            throw new Error('Please enter input for the agent');
-          }
-          if (!selectedAgentId) {
-            throw new Error('Please select an agent');
-          }
-          
-          // Call the run-agent API
-          const agentResponse = await fetch('/api/run-agent', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              agentId: selectedAgentId,
-              input: agentInput,
-              privateKey: wallet.id // Using wallet ID as the identifier
-            })
-          });
-          
-          if (!agentResponse.ok) {
-            const errorData = await agentResponse.json();
-            throw new Error(errorData.error || 'Failed to execute agent');
-          }
-          
-          const agentData = await agentResponse.json();
-          setAgentResult(agentData);
-          break;
-          
         case 'summarize':
           if (!inputText.trim()) {
             throw new Error('Please enter text to summarize');
@@ -315,34 +222,6 @@ export default function WalletDemoPage() {
    */
   const renderServiceForm = () => {
     switch (activeService) {
-      case 'agents':
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Agent Execution</h3>
-            <div>
-              <label className="block mb-2">Select Agent:</label>
-              <select
-                value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                {agents.map(agent => (
-                  <option key={agent.id} value={agent.id}>{agent.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block mb-2">Input:</label>
-              <textarea
-                value={agentInput}
-                onChange={(e) => setAgentInput(e.target.value)}
-                className="w-full p-2 border rounded"
-                rows={5}
-                placeholder="Enter input for the agent..."
-              />
-            </div>
-          </div>
-        );
       case 'summarize':
         return (
           <div className="space-y-4">
@@ -638,34 +517,7 @@ export default function WalletDemoPage() {
   /**
    * Render the API result based on the active service
    */
-  const renderApiResult = () => {
-    if (activeService === 'agents') {
-      if (!agentResult) return null;
-      
-      return (
-        <div className="mt-4 p-4 bg-gray-50 rounded text-black">
-          <h4 className="font-semibold mb-2">Agent Result:</h4>
-          <div className="mb-4">
-            <h5 className="font-medium">Final Output:</h5>
-            <p className="p-2 bg-white border rounded">{agentResult.output}</p>
-          </div>
-          
-          <h5 className="font-medium mb-2">Step Results:</h5>
-          <div className="space-y-3">
-            {agentResult.steps?.map((step, index) => (
-              <div key={index} className="p-2 border rounded bg-white">
-                <p><strong>Step {index + 1}:</strong> {step.serviceName} ({step.serviceId})</p>
-                <p className="mt-1"><strong>Result:</strong></p>
-                <pre className="p-2 bg-gray-100 rounded mt-1 overflow-x-auto">
-                  {JSON.stringify(step.result, null, 2)}
-                </pre>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    
+  const renderApiResult = () => {  
     if (!apiResult) return null;
     
     switch (activeService) {
@@ -716,7 +568,7 @@ export default function WalletDemoPage() {
           <div className="mt-4 p-4 bg-gray-50 rounded text-black">
             <h4 className="font-semibold mb-2">Code Assistant Response:</h4>
             <div className="mt-2 prose max-w-none code-assistant-response text-black">
-              <div dangerouslySetInnerHTML={{ __html: marked.parse(apiResult.content || '') }} />
+              <div dangerouslySetInnerHTML={{ __html: marked.parse(apiResult.content || '', { async: false }) }} />
             </div>
             <style jsx global>{`
               .code-assistant-response {

@@ -34,7 +34,75 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini"
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "input",
+          "label": "Text to Summarize",
+          "type": "textarea",
+          "placeholder": "Enter text to summarize...",
+          "required": true,
+          "rows": 5
+        }
+      ]
+    },
+    {
+      "id": "write",
+      "name": "Content Writer",
+      "description": "Generates high-quality content on any topic",
+      "endpoint": "/api/write",
+      "pricing": {
+        "amount": "0.07",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "topic",
+          "label": "Topic",
+          "type": "textarea",
+          "placeholder": "Enter the topic you want content about...",
+          "required": true,
+          "rows": 2
+        },
+        {
+          "name": "tone",
+          "label": "Tone",
+          "type": "select",
+          "options": [
+            "Professional",
+            "Casual",
+            "Formal",
+            "Friendly",
+            "Technical",
+            "Persuasive"
+          ],
+          "defaultValue": "Professional",
+          "required": true
+        },
+        {
+          "name": "length",
+          "label": "Length",
+          "type": "select",
+          "options": [
+            "Short paragraph",
+            "300 words",
+            "500 words",
+            "800 words",
+            "1000+ words"
+          ],
+          "defaultValue": "500 words",
+          "required": true
+        },
+        {
+          "name": "keywords",
+          "label": "Keywords (comma separated)",
+          "type": "text",
+          "placeholder": "keyword1, keyword2, keyword3...",
+          "required": false
+        }
+      ]
     },
     {
       "id": "translate",
@@ -46,7 +114,33 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini"
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "text",
+          "label": "Text to Translate",
+          "type": "textarea",
+          "placeholder": "Enter text to translate...",
+          "required": true,
+          "rows": 5
+        },
+        {
+          "name": "targetLanguage",
+          "label": "Target Language",
+          "type": "select",
+          "options": [
+            "Spanish",
+            "French",
+            "German",
+            "Italian",
+            "Japanese",
+            "Chinese",
+            "Russian"
+          ],
+          "defaultValue": "Spanish",
+          "required": true
+        }
+      ]
     },
     {
       "id": "generate-image",
@@ -58,7 +152,192 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini"
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "prompt",
+          "label": "Image Prompt",
+          "type": "textarea",
+          "placeholder": "Describe the image you want to generate...",
+          "required": true,
+          "rows": 3
+        }
+      ]
+    },
+    {
+      "id": "code-assistant",
+      "name": "Code Assistant",
+      "description": "Helps with coding questions, debugging, and code generation",
+      "endpoint": "/api/code-assistant",
+      "pricing": {
+        "amount": "0.08",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "query",
+          "label": "Coding Question or Error Message",
+          "type": "textarea",
+          "placeholder": "Enter your coding question or paste an error message...",
+          "required": true,
+          "rows": 3
+        },
+        {
+          "name": "language",
+          "label": "Programming Language",
+          "type": "select",
+          "options": [
+            "javascript",
+            "typescript",
+            "python",
+            "java",
+            "csharp",
+            "cpp",
+            "go",
+            "rust",
+            "php",
+            "ruby",
+            "swift",
+            "kotlin",
+            "other"
+          ],
+          "defaultValue": "javascript",
+          "required": true
+        },
+        {
+          "name": "code",
+          "label": "Code Snippet (Optional)",
+          "type": "textarea",
+          "placeholder": "Paste your code here if you need help with a specific snippet...",
+          "required": false,
+          "rows": 8,
+          "className": "font-mono text-sm"
+        }
+      ]
+    },
+    {
+      "id": "research-assistant",
+      "name": "Research Assistant",
+      "description": "Conducts comprehensive research on any topic",
+      "endpoint": "/api/research-assistant",
+      "pricing": {
+        "amount": "0.12",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "topic",
+          "label": "Research Topic",
+          "type": "textarea",
+          "placeholder": "Enter your research topic or question...",
+          "required": true,
+          "rows": 3
+        },
+        {
+          "name": "depth",
+          "label": "Research Depth",
+          "type": "select",
+          "options": [
+            "basic",
+            "standard",
+            "comprehensive"
+          ],
+          "defaultValue": "standard",
+          "required": true
+        },
+        {
+          "name": "focus",
+          "label": "Research Focus",
+          "type": "select",
+          "options": [
+            "general",
+            "historical",
+            "contemporary",
+            "analytical",
+            "comparative",
+            "practical"
+          ],
+          "defaultValue": "general",
+          "required": true
+        },
+        {
+          "name": "format",
+          "label": "Format Style",
+          "type": "select",
+          "options": [
+            "academic",
+            "business",
+            "educational",
+            "journalistic"
+          ],
+          "defaultValue": "academic",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "poetry-generator",
+      "name": "Poetry Generator",
+      "description": "Creates beautiful poems in various styles and moods",
+      "endpoint": "/api/poetry-generator",
+      "pricing": {
+        "amount": "0.06",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "topic",
+          "label": "Topic or Theme",
+          "type": "textarea",
+          "placeholder": "Enter a topic or theme for your poem...",
+          "required": true,
+          "rows": 3
+        },
+        {
+          "name": "style",
+          "label": "Poetry Style",
+          "type": "select",
+          "options": [
+            "free verse",
+            "haiku",
+            "sonnet",
+            "limerick",
+            "acrostic",
+            "ballad",
+            "villanelle",
+            "tanka",
+            "epic",
+            "ode"
+          ],
+          "defaultValue": "free verse",
+          "required": true
+        },
+        {
+          "name": "mood",
+          "label": "Mood/Tone",
+          "type": "select",
+          "options": [
+            "reflective",
+            "joyful",
+            "melancholic",
+            "romantic",
+            "mysterious",
+            "angry",
+            "peaceful",
+            "nostalgic",
+            "hopeful",
+            "dramatic"
+          ],
+          "defaultValue": "reflective",
+          "required": true
+        }
+      ]
     }
   ]
 }
