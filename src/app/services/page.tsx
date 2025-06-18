@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Footer } from "@/components/footer";
 import { useCdpWallet } from "@/context/CdpWalletContext";
 
 interface InputField {
@@ -204,7 +205,7 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-gray-900/90 rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm border border-gray-800/50">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{service.name}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
@@ -319,34 +320,34 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden">
       {/* Header */}
-      <header className="p-6 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
+      <header className="sticky top-0 z-40 w-full border-b border-b-gray-800/50 bg-black/50 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between p-6">
           <Link href="/" className="font-bold text-2xl">
-            FlowForge
+            Flow
           </Link>
+          <nav>
+            <ul className="flex items-center space-x-6">
+              <li>
+                <Link
+                  href="/wallet"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Wallet
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/services"
+                  className="text-white font-semibold"
+                >
+                  Services
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
-        <nav>
-          <ul className="flex space-x-6">
-            <li>
-              <Link
-                href="/wallet"
-                className="hover:text-blue-400 transition-colors"
-              >
-                Wallet
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/services"
-                className="text-blue-400 border-b-2 border-blue-400 pb-1"
-              >
-                Services
-              </Link>
-            </li>
-          </ul>
-        </nav>
       </header>
 
       {/* Main Content */}
@@ -368,7 +369,7 @@ export default function ServicesPage() {
             {services.map((service) => (
               <div
                 key={service.id}
-                className="bg-gray-800 rounded-lg p-6 border border-gray-700 flex flex-col"
+                className="bg-gray-900/80 rounded-xl p-6 border border-gray-800/50 flex flex-col backdrop-blur-sm"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="h-12 w-12 bg-purple-600 rounded-lg flex items-center justify-center">
@@ -425,35 +426,6 @@ export default function ServicesPage() {
             ))}
           </div>
         )}
-
-        <div className="mt-12 bg-gray-800 rounded-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">How to Use Services</h2>
-          <div className="space-y-4">
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">
-                1. Connect Your Wallet
-              </h3>
-              <p className="text-gray-400">
-                First, connect your wallet to ensure you have sufficient funds
-                to pay for the services.
-              </p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">2. Create an Agent</h3>
-              <p className="text-gray-400">
-                Use these services to create custom agents or use our pre-built
-                agents that leverage these services.
-              </p>
-            </div>
-            <div className="bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-lg font-medium mb-2">3. Execute and Pay</h3>
-              <p className="text-gray-400">
-                When you execute an agent, payment will be automatically
-                processed using the CDP Wallet API.
-              </p>
-            </div>
-          </div>
-        </div>
       </main>
 
       {/* Service Modal */}
@@ -463,44 +435,8 @@ export default function ServicesPage() {
           onClose={() => setSelectedService(null)}
         />
       )}
-
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-900">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <span className="font-bold text-xl">FlowForge</span>
-            <p className="text-gray-400 text-sm mt-1">
-              Building the future of AI workflows
-            </p>
-          </div>
-          <div className="flex space-x-6">
-            <Link
-              href="/"
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/agents"
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              Agents
-            </Link>
-            <Link
-              href="/wallet"
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              Wallet
-            </Link>
-            <Link
-              href="/services"
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              Services
-            </Link>
-          </div>
-        </div>
-      </footer>
+      
+      <Footer />
     </div>
   );
 }

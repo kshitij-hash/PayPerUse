@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Footer } from '@/components/footer';
 import { useCdpWallet } from '@/context/CdpWalletContext';
 import LoadingButton from '@/components/ui/LoadingButton';
 import StatusMessage from '@/components/ui/StatusMessage';
@@ -85,19 +86,34 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden">
       {/* Header */}
-      <header className="p-6 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Link href="/" className="font-bold text-2xl">FlowForge</Link>
+      <header className="sticky top-0 z-40 w-full border-b border-b-gray-800/50 bg-black/50 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between p-6">
+          <Link href="/" className="font-bold text-2xl">
+            Flow
+          </Link>
+          <nav>
+            <ul className="flex items-center space-x-6">
+              <li>
+                <Link
+                  href="/wallet"
+                  className="text-white font-semibold"
+                >
+                  Wallet
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/services"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Services
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
-        <nav>
-          <ul className="flex space-x-6">
-            <li><Link href="/agents" className="hover:text-blue-400 transition-colors">Agents</Link></li>
-            <li><Link href="/wallet" className="text-blue-400 border-b-2 border-blue-400 pb-1">Wallet</Link></li>
-            <li><Link href="/services" className="hover:text-blue-400 transition-colors">Services</Link></li>
-          </ul>
-        </nav>
       </header>
 
       {/* Main Content */}
@@ -112,7 +128,7 @@ export default function WalletPage() {
       {successMessage && <StatusMessage type="success" message={successMessage} className="mb-6" />}
       
       {!wallet ? (
-          <div className="bg-gray-800 rounded-lg p-8 text-center">
+          <div className="bg-gray-900/80 rounded-xl p-8 text-center border border-gray-800/50 backdrop-blur-sm">
             <div className="mb-6">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-blue-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -146,7 +162,7 @@ export default function WalletPage() {
         ) : (
           <div>
             {/* Balance Card */}
-            <div className="bg-gray-800 rounded-lg p-6 mb-8">
+            <div className="bg-gray-900/80 rounded-xl p-6 mb-8 border border-gray-800/50 backdrop-blur-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Your Balance</h2>
                 <div className="flex space-x-4">
@@ -172,14 +188,14 @@ export default function WalletPage() {
             </div>
 
             {/* Transaction History */}
-            <div className="bg-gray-800 rounded-lg p-6">
+            <div className="bg-gray-900/80 rounded-xl p-6 border border-gray-800/50 backdrop-blur-sm">
               <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
               {transactions.length === 0 ? (
                 <p className="text-gray-400 text-center py-8">No transactions found</p>
               ) : (
                 <div className="space-y-4">
                   {transactions.map((tx) => (
-                    <div key={tx.id} className="bg-gray-700 rounded-lg p-4 flex justify-between items-center">
+                    <div key={tx.id} className="bg-gray-800/80 rounded-xl p-4 flex justify-between items-center border border-gray-700/50">
                       <div className="flex items-center">
                         <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-4 ${
                           tx.type === 'deposit' ? 'bg-green-600/20 text-green-400' :
@@ -230,22 +246,8 @@ export default function WalletPage() {
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-gray-900">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <span className="font-bold text-xl">FlowForge</span>
-            <p className="text-gray-400 text-sm mt-1">Building the future of AI workflows</p>
-          </div>
-          <div className="flex space-x-6">
-            <Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link>
-            <Link href="/agents" className="text-gray-400 hover:text-white transition-colors">Agents</Link>
-            <Link href="/wallet" className="text-gray-400 hover:text-white transition-colors">Wallet</Link>
-            <Link href="/services" className="text-gray-400 hover:text-white transition-colors">Services</Link>
-          </div>
-        </div>
-      </footer>
+      
+      <Footer />
     </div>
   );
 }
