@@ -2,15 +2,15 @@
   "agents": [
     {
       "id": "agent-001",
-      "name": "Basic Text Processing Agent",
-      "description": "Processes text inputs and returns formatted results",
+      "name": "Text Generation Agent",
+      "description": "Generates text using Google Gemini",
       "steps": [
         {
           "id": "step-001",
-          "serviceId": "service-001",
+          "serviceId": "gemini-text",
           "config": {
-            "model": "gpt-4",
-            "temperature": 0.7
+            "temperature": 0.7,
+            "maxOutputTokens": 1000
           }
         }
       ],
@@ -22,54 +22,85 @@
     {
       "id": "agent-002",
       "name": "Image Generation Agent",
-      "description": "Generates images based on text prompts",
+      "description": "Generates images from text prompts using Google Gemini",
       "steps": [
         {
           "id": "step-001",
-          "serviceId": "service-001",
+          "serviceId": "generate-image",
           "config": {
-            "model": "gpt-4",
-            "temperature": 0.5
-          }
-        },
-        {
-          "id": "step-002",
-          "serviceId": "service-002",
-          "config": {
-            "model": "dall-e-3",
+            "size": "1024x1024",
             "quality": "standard"
           }
         }
       ],
       "pricing": {
-        "amount": "0.05",
+        "amount": "0.10",
         "currency": "USDC"
       }
     },
     {
       "id": "agent-003",
       "name": "Code Assistant Agent",
-      "description": "Helps with coding tasks and provides code explanations",
+      "description": "Helps with coding tasks and provides code explanations using Google Gemini",
       "steps": [
         {
           "id": "step-001",
-          "serviceId": "service-001",
+          "serviceId": "gemini-text",
           "config": {
-            "model": "gpt-4",
             "temperature": 0.3,
-            "context": "programming"
-          }
-        },
-        {
-          "id": "step-002",
-          "serviceId": "service-003",
-          "config": {
-            "language": "auto-detect"
+            "systemInstruction": "You are a helpful coding assistant. Provide clear and concise code explanations and solutions.",
+            "maxOutputTokens": 1500
           }
         }
       ],
       "pricing": {
         "amount": "0.02",
+        "currency": "USDC"
+      }
+    },
+    {
+      "id": "agent-004",
+      "name": "Multi-Step Translator",
+      "description": "Summarizes text and then translates it to French",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "summarize",
+          "config": {
+            "max_length": 150
+          }
+        },
+        {
+          "id": "step-002",
+          "serviceId": "translate",
+          "config": {
+            "target_lang": "fr",
+            "preserve_formatting": true
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.10",
+        "currency": "USDC"
+      }
+    },
+    {
+      "id": "agent-005",
+      "name": "Data Analysis Agent",
+      "description": "Processes and analyzes data sets using Google Gemini",
+      "steps": [
+        {
+          "id": "step-001",
+          "serviceId": "gemini-text",
+          "config": {
+            "temperature": 0.2,
+            "systemInstruction": "You are a data analysis expert. Analyze the provided data and return insights in JSON format.",
+            "maxOutputTokens": 2000
+          }
+        }
+      ],
+      "pricing": {
+        "amount": "0.05",
         "currency": "USDC"
       }
     }

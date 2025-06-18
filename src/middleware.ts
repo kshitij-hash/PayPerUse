@@ -26,6 +26,20 @@ export const middleware = paymentMiddleware(
       config: {
         description: 'AI image generation service'
       }
+    },
+    '/api/text-generation': {
+      price: '$0.05',
+      network: "base-sepolia",
+      config: {
+        description: 'Text generation using Gemini AI'
+      }
+    },
+    '/api/vision-analysis': {
+      price: '$0.10',
+      network: "base-sepolia",
+      config: {
+        description: 'Vision analysis using Gemini AI'
+      }
     }
   },
   {
@@ -39,5 +53,7 @@ export const config = {
     '/api/summarize/:path*',
     '/api/translate/:path*',
     '/api/generate-image/:path*',
+    '/api/text-generation/:path*',
+    '/api/vision-analysis/:path*',
   ]
 };

@@ -40,6 +40,9 @@ interface Service {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Get payment header from the original request
+    const paymentHeader = request.headers.get('X-PAYMENT') || request.headers.get('x-payment');
+    
     const body = await request.json();
     const { agentId, input, config = {}, privateKey } = body;
 
@@ -74,9 +77,29 @@ export async function POST(request: NextRequest) {
 
     // Create a wallet account from the provided private key or use a default test key
     // In production, you should never hardcode private keys and use secure key management
-    const account = privateKey 
-      ? privateKeyToAccount(`0x${privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey}`)
-      : privateKeyToAccount('0x1111111111111111111111111111111111111111111111111111111111111111'); // Demo key for testing
+    let account;
+    try {
+      if (privateKey) {
+        // Check if privateKey is a valid hex string
+        const hexRegex = /^(0x)?[0-9a-fA-F]+$/;
+        if (hexRegex.test(privateKey)) {
+          // It's a valid hex string, use it as a private key
+          const formattedKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
+          account = privateKeyToAccount(formattedKey);
+        } else {
+          // It's not a valid hex string (likely a wallet ID), use a demo key
+          console.log('Using demo key for wallet ID:', privateKey);
+          account = privateKeyToAccount('0x1111111111111111111111111111111111111111111111111111111111111111');
+        }
+      } else {
+        // No key provided, use demo key
+        account = privateKeyToAccount('0x1111111111111111111111111111111111111111111111111111111111111111');
+      }
+    } catch (keyError) {
+      console.error('Error creating account from private key:', keyError);
+      // Fallback to demo key
+      account = privateKeyToAccount('0x1111111111111111111111111111111111111111111111111111111111111111');
+    }
 
     // Execute each step in the agent workflow
     const stepResults = [];
@@ -94,29 +117,73 @@ export async function POST(request: NextRequest) {
       }
 
       // Create an Axios instance with payment handling for this service
-      const api = withPaymentInterceptor(
-        axios.create({
-          baseURL: service.endpoint,
-        }),
-        account
-      );
-
-      // Make the request to the service with the current input and step config
-      const response = await api.post('/', {
-        input: currentInput,
-        config: step.config
-      });
-
-      // Store the result
-      stepResults.push({
-        stepId: step.id,
-        serviceId: step.serviceId,
-        serviceName: service.name,
-        result: response.data
-      });
-
-      // Use this step's output as the input for the next step
-      currentInput = response.data.output || response.data;
+      // Determine if the endpoint is relative or absolute
+      const isRelativeEndpoint = service.endpoint.startsWith('/');
+      
+      let baseURL: string;
+      let requestPath: string;
+      
+      if (isRelativeEndpoint) {
+        // For relative endpoints, use the app URL as base and the endpoint as path
+        baseURL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Default to localhost if env var not set
+        requestPath = service.endpoint;
+      } else {
+        // For absolute endpoints, use the endpoint as base and '/' as path
+        baseURL = service.endpoint;
+        requestPath = '/';
+      }
+      
+      // For internal endpoints, we need to forward the payment header but not use the payment interceptor
+      // as that would cause double-payment issues
+      if (isRelativeEndpoint) {
+        // For internal endpoints, just create a regular axios instance with the payment header
+        const api = axios.create({
+          baseURL,
+          headers: paymentHeader ? { 'X-PAYMENT': paymentHeader } : {}
+        });
+        
+        // Make the request
+        const response = await api.post(requestPath, {
+          input: currentInput,
+          config: step.config
+        });
+        
+        // Store the result
+        stepResults.push({
+          stepId: step.id,
+          serviceId: step.serviceId,
+          serviceName: service.name,
+          result: response.data
+        });
+        
+        // Update the input for the next step
+        currentInput = response.data.output;
+      } else {
+        // For external endpoints, use the payment interceptor
+        const api = withPaymentInterceptor(
+          axios.create({
+            baseURL,
+          }),
+          account
+        );
+        
+        // Make the request
+        const response = await api.post(requestPath, {
+          input: currentInput,
+          config: step.config
+        });
+        
+        // Store the result
+        stepResults.push({
+          stepId: step.id,
+          serviceId: step.serviceId,
+          serviceName: service.name,
+          result: response.data
+        });
+        
+        // Update the input for the next step
+        currentInput = response.data.output;
+      }
     }
 
     // Return the final result and all step results

@@ -1,52 +1,28 @@
 {
   "services": [
     {
-      "id": "service-001",
-      "name": "Text Generation API",
-      "description": "Generates text based on prompts using various language models",
-      "endpoint": "https://api.example.com/text-generation",
+      "id": "gemini-text",
+      "name": "Gemini Text Generation",
+      "description": "Generates text using Google's Gemini AI",
+      "endpoint": "/api/text-generation",
       "pricing": {
         "amount": "0.005",
         "currency": "USDC"
       },
-      "models": ["gpt-4", "gpt-3.5", "claude-2"],
-      "provider": "OpenAI"
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini"
     },
     {
-      "id": "service-002",
-      "name": "Image Generation API",
-      "description": "Creates images from text descriptions",
-      "endpoint": "https://api.example.com/image-generation",
-      "pricing": {
-        "amount": "0.02",
-        "currency": "USDC"
-      },
-      "models": ["dall-e-3", "stable-diffusion", "midjourney"],
-      "provider": "OpenAI"
-    },
-    {
-      "id": "service-003",
-      "name": "Code Analysis API",
-      "description": "Analyzes code for bugs, improvements, and explanations",
-      "endpoint": "https://api.example.com/code-analysis",
+      "id": "gemini-vision",
+      "name": "Gemini Vision Analysis",
+      "description": "Analyzes images and generates text using Google's Gemini Vision",
+      "endpoint": "/api/vision-analysis",
       "pricing": {
         "amount": "0.01",
         "currency": "USDC"
       },
-      "languages": ["javascript", "python", "java", "go", "rust"],
-      "provider": "CodeAnalytics"
-    },
-    {
-      "id": "service-004",
-      "name": "Data Processing API",
-      "description": "Processes and analyzes data sets",
-      "endpoint": "https://api.example.com/data-processing",
-      "pricing": {
-        "amount": "0.015",
-        "currency": "USDC"
-      },
-      "formats": ["csv", "json", "xml", "parquet"],
-      "provider": "DataWizard"
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini"
     },
     {
       "id": "summarize",
