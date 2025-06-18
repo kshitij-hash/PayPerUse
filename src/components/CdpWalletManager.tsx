@@ -15,12 +15,16 @@ import { callPaidApi } from '@/lib/x402Client';
 // Define token balance interface
 interface TokenBalance {
   token: {
-    name: string;
-    symbol: string;
-    decimals: number;
+    name?: string;
+    symbol?: string;
+    decimals?: number;
+    network?: string;
     contractAddress?: string;
   };
-  amount: string;
+  amount: string | {
+    amount: string;
+    decimals: number;
+  };
   usdValue?: string;
 }
 
@@ -211,8 +215,8 @@ export default function CdpWalletManager() {
         throw new Error(data.error || 'Failed to fetch token balances');
       }
 
-      if (data.success && data.balances) {
-        setTokenBalances(data.balances);
+      if (data.success && data.balances && data.balances.balances) {
+        setTokenBalances(data.balances.balances);
       } else {
         throw new Error('Invalid response from server');
       }
@@ -264,14 +268,17 @@ export default function CdpWalletManager() {
               {tokenBalances.map((balance, index) => (
                 <div key={index} className="border-b pb-2">
                   <div className="flex justify-between">
-                    <span className="font-medium">{balance.token.symbol}</span>
+                    <span className="font-medium">{balance.token.symbol || 'Token'}</span>
                     <span>
-                      {parseFloat(balance.amount) / Math.pow(10, balance.token.decimals)}
+                      {typeof balance.amount === 'object' ? 
+                        parseFloat(balance.amount.amount) / Math.pow(10, balance.amount.decimals) : 
+                        parseFloat(balance.amount) / Math.pow(10, balance.token?.decimals || 0)
+                      }
                       {balance.usdValue && ` ($${balance.usdValue})`}
                     </span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {balance.token.name}
+                    {balance.token.name || 'Unknown Token'}
                     {balance.token.contractAddress && (
                       <span className="ml-1">({balance.token.contractAddress.substring(0, 6)}...{balance.token.contractAddress.substring(38)})</span>
                     )}
