@@ -162,7 +162,8 @@
             "Italian",
             "Japanese",
             "Chinese",
-            "Russian"
+            "Russian",
+            "Hindi"
           ],
           "defaultValue": "Spanish",
           "required": true
@@ -363,6 +364,50 @@
           ],
           "defaultValue": "reflective",
           "required": true
+        }
+      ]
+    },
+    {
+      "id": "legal-assistant",
+      "name": "Global Legal Assistant",
+      "description": "Provides legal information and assistance on laws from countries around the world",
+      "endpoint": "/api/legal-assistant",
+      "pricing": {
+        "amount": "0.10",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Google Gemini",
+      "inputs": [
+        {
+          "name": "query",
+          "label": "Legal Question",
+          "type": "textarea",
+          "placeholder": "Enter your legal question or topic...",
+          "required": true
+        },
+        {
+          "name": "jurisdiction",
+          "label": "Jurisdiction",
+          "type": "select",
+          "options": [
+            "Global (International Law)",
+            "United States",
+            "European Union",
+            "United Kingdom",
+            "Canada",
+            "Australia",
+            "India",
+            "China",
+            "Japan",
+            "Brazil",
+            "South Africa",
+            "Russia",
+            "Germany",
+            "France"
+          ],
+          "defaultValue": "Global (International Law)",
+          "required": false
         }
       ]
     }
