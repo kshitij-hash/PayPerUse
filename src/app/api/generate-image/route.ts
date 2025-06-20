@@ -1,4 +1,3 @@
-//TODO: Fix this code
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Modality} from '@google/genai';
 
@@ -24,10 +23,13 @@ export async function POST(req: NextRequest) {
  // Generate image content
  const response = await genAI.models.generateContent({
       model: "gemini-2.0-flash-preview-image-generation",
-      contents: prompt,
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
       config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE
-        ],
+        responseModalities: [Modality.TEXT, Modality.IMAGE]
       }
     });
      if (!response.candidates || response.candidates.length === 0) {

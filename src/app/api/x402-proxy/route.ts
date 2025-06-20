@@ -31,25 +31,33 @@ export async function POST(request: NextRequest) {
     console.log(`x402-proxy - Starting API call to ${endpoint} with wallet ${walletId}`);
     
     // Get the wallet account from CDP
-    const serverAccount = await cdpClient.evm.getAccount({
-      name: walletId,
-      address: walletAddress as `0x${string}` | undefined,
-    });
+    let serverAccount;
+    try {
+      serverAccount = await cdpClient.evm.getAccount({
+        name: walletId,
+        address: walletAddress as `0x${string}` | undefined,
+      });
+    } catch (error: any) {
+      console.error('x402-proxy - Error getting wallet:', error);
+      return NextResponse.json(
+        { error: `Wallet not found: ${walletId}` },
+        { status: 404 }
+      );
+    }
 
     // Convert to viem account format
     const account = toAccount<LocalAccount>(serverAccount as unknown as LocalAccount);
     
     // Create axios instance with payment interceptor
-    const axiosInstance = axios.create({ baseURL: process.env.VERCEL_URL || 'http://localhost:3000' });
+    const axiosInstance = axios.create({ 
+      baseURL: process.env.VERCEL_URL || 'http://localhost:3000' 
+    });
     
     // Add a custom interceptor to convert payment header names to uppercase
     axiosInstance.interceptors.request.use(config => {
       // Check if headers exist
       if (config.headers) {
         const headers = config.headers as Record<string, string>;
-        
-        // Log headers if needed for debugging
-        // console.log('x402-proxy - Headers before conversion:', JSON.stringify(headers));
         
         // Look for lowercase payment headers and convert them to uppercase
         const paymentHeaders = ['x-payment', 'x-payment-signature', 'x-payment-timestamp', 'x-payment-address'];
@@ -76,9 +84,6 @@ export async function POST(request: NextRequest) {
       return config;
     });
     
-    // Create client with payment interceptor
-    // Initialize payment interceptor
-    
     // Create a custom axios interceptor to log 402 responses
     axiosInstance.interceptors.response.use(
       response => response,
@@ -90,43 +95,49 @@ export async function POST(request: NextRequest) {
       }
     );
     
+    // Create client with payment interceptor
     const client = withPaymentInterceptor(
       axiosInstance,
       account
     );
     
-    // Add another interceptor after withPaymentInterceptor to log retry attempts
-    client.interceptors.request.use(config => {
-      // Check if the config has the __is402Retry property
-      // Using a type guard approach instead of direct casting
-      const hasRetryFlag = (obj: unknown): obj is { __is402Retry: boolean } => 
-        typeof obj === 'object' && obj !== null && '__is402Retry' in obj;
-      
-      if (hasRetryFlag(config) && config.__is402Retry) {
-        // Ensure X-PAYMENT header is uppercase in retry requests
-        if (config.headers && !config.headers['X-PAYMENT'] && config.headers['x-payment']) {
-          config.headers['X-PAYMENT'] = config.headers['x-payment'];
-          delete config.headers['x-payment'];
-          console.log('x402-proxy - Ensured X-PAYMENT header is uppercase in retry');
-        }
-      }
-      return config;
-    });
-    
     // Make the API call with the payment interceptor
     let response;
-    if (method === 'GET') {
-      response = await client.get(endpoint, { params: data });
-    } else if (method === 'POST') {
-      response = await client.post(endpoint, data);
-    } else if (method === 'PUT') {
-      response = await client.put(endpoint, data);
-    } else if (method === 'DELETE') {
-      response = await client.delete(endpoint, { data });
-    } else {
+    try {
+      if (method === 'GET') {
+        response = await client.get(endpoint, { params: data });
+      } else if (method === 'POST') {
+        response = await client.post(endpoint, data);
+      } else if (method === 'PUT') {
+        response = await client.put(endpoint, data);
+      } else if (method === 'DELETE') {
+        response = await client.delete(endpoint, { data });
+      } else {
+        return NextResponse.json(
+          { error: `Unsupported method: ${method}` },
+          { status: 400 }
+        );
+      }
+      
+      console.log(`x402-proxy - Successful response from ${endpoint}`);
+      return NextResponse.json(response.data);
+    } catch (error: any) {
+      // If we get a 402 Payment Required, pass it through to the client
+      if (error.response?.status === 402) {
+        console.log('x402-proxy - Received 402 Payment Required');
+        
+        // Return the 402 response with payment details
+        return NextResponse.json(
+          error.response.data,
+          { status: 402 }
+        );
+      }
+      
+      // For other errors, return appropriate error response
+      console.error(`x402-proxy - Error calling ${endpoint}:`, error.message);
       return NextResponse.json(
-        { error: `Unsupported method: ${method}` },
-        { status: 400 }
+        { error: `API call failed: ${error.message}` },
+        { status: error.response?.status || 500 }
       );
     }
     
