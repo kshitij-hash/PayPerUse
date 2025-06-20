@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image"; // Import next/image
 import { Footer } from "@/components/footer";
 import { useCdpWallet } from "@/context/CdpWalletContext";
+import { Header } from "@/components/Header";
 
 interface InputField {
   name: string;
@@ -119,25 +120,39 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
         payload
       );
 
-      if (apiResponse == null) { // Checks for both null and undefined
-        setError("Failed to get a response from the service. The response was null or undefined.");
+      if (apiResponse == null) {
+        // Checks for both null and undefined
+        setError(
+          "Failed to get a response from the service. The response was null or undefined."
+        );
         setResult(null);
         setImageBase64(null); // Clear image if the response is null
         // Consider setting loading state to false here if applicable, e.g., setLoading(false);
       } else if (service.id === "generate-image") {
-        if (typeof apiResponse === 'object' && apiResponse !== null) {
-          if ('result' in apiResponse && typeof (apiResponse as { result: unknown }).result === 'string') {
+        if (typeof apiResponse === "object" && apiResponse !== null) {
+          if (
+            "result" in apiResponse &&
+            typeof (apiResponse as { result: unknown }).result === "string"
+          ) {
             setImageBase64((apiResponse as ImageApiResponse).result); // apiResponse is the full data URI
             setResult(null); // Don't show raw data URI in the JSON result area
           } else {
-            setError("Image generator response is missing 'result' string property.");
+            setError(
+              "Image generator response is missing 'result' string property."
+            );
             setResult(JSON.stringify(apiResponse, null, 2)); // Show the problematic response
             setImageBase64(null);
           }
         } else {
-          setError("Image generator returned an unexpected response. Expected a data URI string (e.g., data:image/jpeg;base64,...).");
+          setError(
+            "Image generator returned an unexpected response. Expected a data URI string (e.g., data:image/jpeg;base64,...)."
+          );
           // Show what was received if it's not the expected format
-          setResult(typeof apiResponse === 'object' ? JSON.stringify(apiResponse, null, 2) : String(apiResponse));
+          setResult(
+            typeof apiResponse === "object"
+              ? JSON.stringify(apiResponse, null, 2)
+              : String(apiResponse)
+          );
           setImageBase64(null);
         }
       } else {
@@ -323,21 +338,25 @@ function ServiceModal({ service, onClose }: ServiceModalProps) {
           <div className="mt-4">
             <h3 className="font-medium mb-2">Generated Image:</h3>
             <div className="relative w-full max-w-md mx-auto aspect-square border border-gray-700 rounded overflow-hidden">
-              <Image 
+              <Image
                 src={imageBase64} // imageBase64 now holds the full data URI
-                alt="Generated image" 
+                alt="Generated image"
                 layout="fill"
                 objectFit="contain"
               />
             </div>
           </div>
-        ) : result && (
-          <div className="mt-4">
-            <h3 className="font-medium mb-2">Result:</h3>
-            <div className="p-3 bg-gray-700 rounded overflow-x-auto">
-              <pre className="text-green-300 whitespace-pre-wrap">{result}</pre>
+        ) : (
+          result && (
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Result:</h3>
+              <div className="p-3 bg-gray-700 rounded overflow-x-auto">
+                <pre className="text-green-300 whitespace-pre-wrap">
+                  {result}
+                </pre>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
     </div>
@@ -367,35 +386,10 @@ export default function ServicesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden">
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-b-gray-800/50 bg-black/50 backdrop-blur-lg">
-        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between p-6">
-          <Link href="/" className="font-bold text-2xl">
-            Flow
-          </Link>
-          <nav>
-            <ul className="flex items-center space-x-6">
-              <li>
-                <Link
-                  href="/wallet"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  Wallet
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/services"
-                  className="text-white font-semibold"
-                >
-                  Services
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-black text-white overflow-hidden relative pt-20">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-900/20 via-black to-pink-900/20" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
+      <Header />
 
       {/* Main Content */}
       <main className="flex-grow p-6 max-w-7xl mx-auto w-full">
@@ -493,7 +487,7 @@ export default function ServicesPage() {
           onClose={() => setSelectedService(null)}
         />
       )}
-      
+
       <Footer />
     </div>
   );
