@@ -12,9 +12,11 @@ import {
   saveWalletToLocalStorage,
   getWalletFromLocalStorage,
   removeWalletFromLocalStorage,
+  getCurrentUserSession,
   saveWalletToServerSession,
   removeWalletFromServerSession,
   getWalletFromServerSession,
+  getUserIdByEmail,
   SessionWallet,
 } from "@/lib/sessionWalletManager";
 import { callPaidApi } from "@/lib/x402Client";
@@ -74,6 +76,32 @@ const CdpWalletContext = createContext<CdpWalletContextType>({
 
 // Provider component
 export function CdpWalletProvider({ children }: { children: ReactNode }) {
+  // Get user session from next-auth
+  // Define a proper type for the session object
+  interface UserSession {
+    user?: {
+      id?: string;
+      name?: string;
+      email?: string;
+    };
+  }
+  
+  const [session, setSession] = useState<UserSession | null>(null);
+  
+  // Fetch session data when component mounts
+  useEffect(() => {
+    async function fetchSession() {
+      try {
+        const sessionData = await getCurrentUserSession();
+        setSession(sessionData.session);
+      } catch (error) {
+        console.error("Error fetching user session:", error);
+      }
+    }
+    
+    fetchSession();
+  }, []);
+  
   // State for wallet information
   const [wallet, setWallet] = useState<SessionWallet | null>(null);
   // State for loading status
@@ -131,7 +159,7 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingBalances(false);
     }
-  }, []); // Remove wallet dependency to break the cycle
+  }, [wallet]); // Include wallet dependency to properly update when wallet changes
 
   /**
    * Create a new CDP wallet
@@ -143,6 +171,43 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
     setSuccessMessage(null);
 
     try {
+      // Ensure we have the latest session data before creating a wallet
+      let currentUserId: string | undefined = undefined;
+      let userEmail: string | undefined = undefined;
+      
+      // First try to get email from current session
+      if (session && session.user && session.user.email) {
+        userEmail = session.user.email;
+        console.log('Using email from current session:', userEmail);
+      } else {
+        // Try to refresh the session data to get email
+        try {
+          const freshSession = await getCurrentUserSession();
+          console.log('Refreshed session data:', freshSession);
+          if (freshSession.authenticated && freshSession.session?.user?.email) {
+            userEmail = freshSession.session.user.email;
+            console.log('Using email from refreshed session:', userEmail);
+          }
+        } catch (sessionError) {
+          console.error('Error refreshing session:', sessionError);
+        }
+      }
+      
+      // If we have an email, try to get the user ID from the database
+      if (userEmail) {
+        try {
+          const userId = await getUserIdByEmail(userEmail);
+          if (userId) {
+            currentUserId = userId;
+            console.log('Found user ID from database:', currentUserId);
+          } else {
+            console.warn('No user found with email:', userEmail);
+          }
+        } catch (dbError) {
+          console.error('Error fetching user ID from database:', dbError);
+        }
+      }
+
       const response = await fetch("/api/create-wallet", {
         method: "POST",
         headers: {
@@ -158,20 +223,28 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.success && data.wallet) {
-        // Create wallet object
+        // Create wallet object - the API now includes walletId and userId if available
         const newWallet: SessionWallet = {
           id: data.wallet.id,
           address: data.wallet.address,
           network: data.wallet.network,
           createdAt: Date.now(),
+          walletId: data.wallet.walletId || data.wallet.id,
+          // Use the user ID from our refreshed session if available
+          userId: data.wallet.userId || currentUserId
         };
+        
+        console.log('Creating wallet with userId:', newWallet.userId);
+        console.log('Database save result from API:', data.dbSaved);
 
         // Save wallet to localStorage for immediate access
         saveWalletToLocalStorage(newWallet);
 
         // Also save to server-side session for persistence across tabs/browsers
+        // The server-side session now also saves to database if user is authenticated
         try {
-          await saveWalletToServerSession(newWallet);
+          const serverSaveResult = await saveWalletToServerSession(newWallet);
+          console.log('Server session save result:', serverSaveResult);
         } catch (sessionError) {
           console.warn("Failed to save wallet to server session:", sessionError);
           // Continue even if server session storage fails
@@ -190,7 +263,7 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTokenBalances]);
+  }, [fetchTokenBalances, session]);  // Include session?.user?.id dependency
 
   /**
    * Clear wallet information
@@ -199,11 +272,11 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
     // Remove from localStorage
     removeWalletFromLocalStorage();
 
-    // Also remove from server-side session
+    // Also remove from server-side session (which now also removes from database if authenticated)
     try {
       await removeWalletFromServerSession();
     } catch (error) {
-      console.warn("Failed to remove wallet from server session:", error);
+      console.warn("Failed to remove wallet from server session/database:", error);
       // Continue even if server session removal fails
     }
 
@@ -238,55 +311,67 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
     }
   }, [wallet]);
 
-  // Load wallet from localStorage or server session on component mount
+  // Load wallet from database, localStorage, or server session on component mount
   useEffect(() => {
     const fetchWallet = async () => {
-      // First try to get wallet from localStorage
+      console.log('Starting wallet fetch process...');
+      console.log('Session data:', session);
+      
+      // First try to get wallet from localStorage for quick loading
       const localWallet = getWalletFromLocalStorage();
+      console.log('Local wallet from localStorage:', localWallet);
+      
       if (localWallet) {
         setWallet(localWallet);
-        // Fetch token balances for the wallet
-        fetchTokenBalances(localWallet);
-        return;
+        console.log('Set wallet from localStorage');
+        // Don't fetch token balances here - will be handled by the other useEffect
       }
 
-      // If not in localStorage, try to get from server session
-      try {
-        const serverWallet = await getWalletFromServerSession();
-        if (serverWallet) {
-          setWallet(serverWallet);
-          // Also save to localStorage for faster access next time
-          saveWalletToLocalStorage(serverWallet);
-          // Fetch token balances for the wallet
-          fetchTokenBalances(serverWallet);
+      // If user is authenticated, try to get wallet from server session (which now checks database first)
+      // Check for either user ID or email to handle both cases
+      if (session?.user?.id || session?.user?.email) {
+        console.log('User is authenticated, fetching wallet from server session...');
+        try {
+          console.log('Calling getWalletFromServerSession()...');
+          const serverWallet = await getWalletFromServerSession();
+          console.log('Server wallet result:', serverWallet);
+          
+          if (serverWallet) {
+            // If we got a wallet from server/database that's different from localStorage or no localStorage wallet,
+            // update the state and localStorage
+            if (!localWallet || serverWallet.id !== localWallet.id) {
+              console.log('Updating wallet from server session/database');
+              setWallet(serverWallet);
+              // Also save to localStorage for faster access next time
+              saveWalletToLocalStorage(serverWallet);
+              // Don't fetch token balances here - will be handled by the other useEffect
+            } else {
+              console.log('Server wallet matches localStorage wallet, no update needed');
+            }
+          } else {
+            console.log('No wallet found in server session/database');
+          }
+        } catch (error) {
+          console.error("Error fetching wallet from server/database:", error);
         }
-      } catch (error) {
-        console.error("Error fetching wallet from server session:", error);
+      } else {
+        console.log('User not authenticated, skipping server wallet fetch');
       }
     };
 
     fetchWallet();
-  }, [fetchTokenBalances]);
+  }, [session]);
   
-  // Set up a polling interval for balance updates
+  // Fetch balances once when wallet is loaded
   useEffect(() => {
-    // Only set up polling if we have a wallet
+    // Only fetch if we have a wallet
     if (!wallet) return;
     
     // Initial fetch - only do this once when wallet is first set
     fetchTokenBalances(wallet);
     
-    // Set up polling every 30 seconds
-    const intervalId = setInterval(() => {
-      // Use the current wallet from the closure to avoid dependency issues
-      if (wallet) {
-        fetchTokenBalances(wallet);
-      }
-    }, 30000); // 30 seconds
-    
-    // Clean up interval on unmount or when wallet changes
-    return () => clearInterval(intervalId);
-  }, [wallet]); // Only depend on wallet, not fetchTokenBalances
+    // No polling interval - will only update on manual refresh
+  }, [wallet, fetchTokenBalances]); // Include fetchTokenBalances in dependencies
 
   // Context value
   const contextValue: CdpWalletContextType = {

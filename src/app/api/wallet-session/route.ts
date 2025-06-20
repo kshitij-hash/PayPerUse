@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { WALLET_COOKIE_NAME } from '@/lib/sessionWalletManager';
-
-// Cookie expiration in days
+import { 
+  WALLET_COOKIE_NAME, 
+  saveWalletToDatabase,
+  getWalletFromDatabase,
+  removeWalletFromDatabase,
+  getUserIdByEmail,
+  SessionWallet
+} from '@/lib/sessionWalletManager';
 
 // Cookie expiration in days
 const COOKIE_EXPIRY_DAYS = 30;
 
 /**
- * Session Wallet interface
- */
-interface SessionWallet {
-  id: string;
-  address: string;
-  network: string;
-  createdAt: number;
-}
-
-/**
  * POST handler for /api/wallet-session
  * 
  * Sets a secure HTTP-only cookie with wallet information
+ * and saves wallet to database for authenticated users
  * 
  * @param req The request object
  * @returns Response with success status
@@ -29,6 +25,28 @@ export async function POST(req: NextRequest) {
     // Parse request body
     const body = await req.json();
     const { wallet, action } = body;
+    
+    // Get current user session
+    const { auth } = await import("@/lib/auth");
+    const session = await auth();
+    
+    // Get user ID - either directly from session or by looking up via email
+    let userId = session?.user?.id;
+    
+    // If no user ID but we have an email, try to look up the user ID
+    if (!userId && session?.user?.email) {
+      try {
+        const foundUserId = await getUserIdByEmail(session.user.email);
+        if (foundUserId) {
+          userId = foundUserId; // Only assign if not null
+          console.log(`Found user ID ${userId} for email ${session.user.email}`);
+        } else {
+          console.warn(`No user ID found for email ${session.user.email}`);
+        }
+      } catch (error) {
+        console.error('Error looking up user ID by email:', error);
+      }
+    }
     
     if (action === 'save' && wallet) {
       // Validate wallet data
@@ -44,8 +62,20 @@ export async function POST(req: NextRequest) {
         id: wallet.id,
         address: wallet.address,
         network: wallet.network,
-        createdAt: wallet.createdAt || Date.now()
+        createdAt: wallet.createdAt || Date.now(),
+        walletId: wallet.walletId || wallet.id,
+        userId: userId
       };
+      
+      // If user is authenticated, save wallet to database
+      let dbSaveResult = null;
+      if (userId) {
+        console.log(`Saving wallet to database for user ${userId}`);
+        dbSaveResult = await saveWalletToDatabase(sessionWallet, userId);
+        console.log('Database save result:', dbSaveResult);
+      } else {
+        console.warn('No user ID available, skipping database save');
+      }
       
       // Calculate expiry date
       const expiryDate = new Date();
@@ -54,7 +84,8 @@ export async function POST(req: NextRequest) {
       // Set the cookie in the response
       const response = NextResponse.json({
         success: true,
-        message: 'Wallet saved to session'
+        message: 'Wallet saved to session',
+        dbSaved: !!dbSaveResult
       });
       
       // Set cookie in the response
@@ -70,10 +101,28 @@ export async function POST(req: NextRequest) {
       
       return response;
     } else if (action === 'delete') {
+      // Get wallet from cookie to find its ID
+      const walletCookie = req.cookies.get(WALLET_COOKIE_NAME);
+      let walletId = null;
+      
+      if (walletCookie) {
+        try {
+          const walletData = JSON.parse(walletCookie.value) as SessionWallet;
+          walletId = walletData.id;
+        } catch (parseError) {
+          console.error('Error parsing wallet cookie:', parseError);
+        }
+      }
+      
+      // If user is authenticated and we have a wallet ID, remove from database
+      if (userId && walletId) {
+        await removeWalletFromDatabase(walletId);
+      }
+      
       // Create response
       const response = NextResponse.json({
         success: true,
-        message: 'Wallet removed from session'
+        message: 'Wallet removed from session and database'
       });
       
       // Delete the cookie from response
@@ -98,13 +147,49 @@ export async function POST(req: NextRequest) {
 /**
  * GET handler for /api/wallet-session
  * 
- * Retrieves wallet information from the session cookie
+ * Retrieves wallet information from the session cookie or database
+ * For authenticated users, prioritizes database storage
  * 
  * @returns Response with wallet data or null
  */
 export async function GET(req: NextRequest) {
   try {
-    // Get the wallet cookie from the request
+    // Get current user session
+    const { auth } = await import("@/lib/auth");
+    const session = await auth();
+    
+    // Get user ID - either directly from session or by looking up via email
+    let userId = session?.user?.id;
+    
+    // If no user ID but we have an email, try to look up the user ID
+    if (!userId && session?.user?.email) {
+      try {
+        const foundUserId = await getUserIdByEmail(session.user.email);
+        if (foundUserId) {
+          userId = foundUserId; // Only assign if not null
+          console.log(`Found user ID ${userId} for email ${session.user.email}`);
+        } else {
+          console.warn(`No user ID found for email ${session.user.email}`);
+        }
+      } catch (error) {
+        console.error('Error looking up user ID by email:', error);
+      }
+    }
+    
+    // If user is authenticated, try to get wallet from database first
+    if (userId) {
+      const dbWallet = await getWalletFromDatabase(userId);
+      
+      if (dbWallet) {
+        return NextResponse.json({
+          success: true,
+          wallet: dbWallet,
+          source: 'database'
+        });
+      }
+    }
+    
+    // If no wallet in database or user not authenticated, try cookie
     const walletCookie = req.cookies.get(WALLET_COOKIE_NAME);
     
     if (!walletCookie) {
@@ -118,9 +203,19 @@ export async function GET(req: NextRequest) {
       // Parse the cookie value
       const wallet = JSON.parse(walletCookie.value) as SessionWallet;
       
+      // If user is authenticated but wallet wasn't in DB, save it now
+      if (userId && wallet) {
+        // Add userId to the wallet data
+        wallet.userId = userId;
+        
+        // Save to database
+        await saveWalletToDatabase(wallet, userId);
+      }
+      
       return NextResponse.json({
         success: true,
-        wallet
+        wallet,
+        source: 'cookie'
       });
     } catch (parseError) {
       console.error('Error parsing wallet cookie:', parseError);
