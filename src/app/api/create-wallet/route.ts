@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CdpClient } from '@coinbase/cdp-sdk';
-import { WALLET_COOKIE_NAME } from '@/lib/sessionWalletManager';
+import { 
+  WALLET_COOKIE_NAME, 
+  saveWalletToDatabase,
+  SessionWallet
+} from '@/lib/sessionWalletManager';
 // This API will save wallet data to a secure HTTP-only cookie and also return the data
 // for the client to optionally store in localStorage for faster access
 
@@ -108,13 +112,44 @@ export async function POST(request: NextRequest) {
     // Cast account to our extended type
     const extendedAccount = account as ExtendedAccount;
     
+    // Get current user session directly from Auth.js
+    const { auth } = await import("@/lib/auth");
+    const session = await auth();
+    
+    // Get user ID - either directly from session or by looking up via email
+    let userId = session?.user?.id;
+    
+    // If no user ID but we have an email, try to look up the user ID
+    if (!userId && session?.user?.email) {
+      const { getUserIdByEmail } = await import("@/lib/sessionWalletManager");
+      try {
+        const foundUserId = await getUserIdByEmail(session.user.email);
+        if (foundUserId) {
+          userId = foundUserId; // Only assign if not null
+          console.log(`Found user ID ${userId} for email ${session.user.email}`);
+        } else {
+          console.warn(`No user ID found for email ${session.user.email}`);
+        }
+      } catch (error) {
+        console.error('Error looking up user ID by email:', error);
+      }
+    }
+    
     // Prepare wallet information
-    const walletInfo = {
+    const walletInfo: SessionWallet = {
       id: extendedAccount.id || `wallet-${Date.now()}`, // Fallback ID if not provided by SDK
       address: extendedAccount.address,
       network: extendedAccount.network || "base-sepolia", // Default to base-sepolia for x402 testing
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      walletId: extendedAccount.id || undefined,
+      userId: userId || undefined
     };
+    
+    // If user is authenticated, save wallet to database
+    let dbSaveResult = null;
+    if (userId) {
+      dbSaveResult = await saveWalletToDatabase(walletInfo, userId);
+    }
     
     // Save wallet data to a secure HTTP-only cookie
     // Calculate expiry date (30 days)
@@ -126,7 +161,8 @@ export async function POST(request: NextRequest) {
       success: true,
       wallet: walletInfo,
       funding: fund ? fundingResult : { skipped: true },
-      sessionSaved: true
+      sessionSaved: true,
+      dbSaved: !!dbSaveResult
     }, { status: 200 });
     
     // Set wallet data in a secure HTTP-only cookie
