@@ -130,6 +130,9 @@ Before using the API endpoints, make sure to:
 # For Google Gemini AI Services
 GEMINI_API_KEY=your_gemini_api_key_here
 
+# For AkashChat API Services
+AKASH_API_KEY=your_akash_api_key_here  # Get this from AkashChat (https://chatapi.akash.network)
+
 # For Coinbase Developer Platform (CDP) Wallet Integration
 CDP_API_KEY_ID=your_cdp_api_key_id
 CDP_API_KEY_SECRET=your_cdp_api_key_secret

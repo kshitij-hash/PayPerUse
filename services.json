@@ -1,6 +1,46 @@
 {
   "services": [
     {
+      "id": "akash-chat",
+      "name": "AkashChat Agent",
+      "description": "Chat with various open-source AI models powered by the Akash Supercloud",
+      "endpoint": "/api/akash-chat",
+      "pricing": {
+        "amount": "0.05",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "Akash Network",
+      "inputs": [
+        {
+          "name": "model",
+          "label": "AI Model",
+          "type": "select",
+          "options": [
+            "Meta-Llama-3-1-8B-Instruct-FP8",
+            "Meta-Llama-3-2-3B-Instruct",
+            "Meta-Llama-3-3-70B-Instruct",
+            "Meta-Llama-4-Maverick-17B-128E-Instruct-FP8",
+            "DeepSeek-R1",
+            "DeepSeek-R1-Distill-Llama-70B",
+            "DeepSeek-R1-Distill-Qwen-14B",
+            "DeepSeek-R1-Distill-Qwen-32B",
+            "Qwen3-235B-A22B-FP8"
+          ],
+          "required": true,
+          "defaultValue": "Meta-Llama-3-1-8B-Instruct-FP8"
+        },
+        {
+          "name": "prompt",
+          "label": "Your Message",
+          "type": "textarea",
+          "placeholder": "Enter your message to the AI...",
+          "required": true,
+          "rows": 5
+        }
+      ]
+    },
+    {
       "id": "gemini-text",
       "name": "Gemini Text Generation",
       "description": "Generates text using Google's Gemini AI",
