@@ -56,6 +56,11 @@ const baseMiddleware = paymentMiddleware(
       network: "base-sepolia",
       config: { description: "Chat with various open-source AI models powered by the Akash Supercloud" },
     },
+    "/api/trailer-generator": {
+      price: "$0.15",
+      network: "base-sepolia",
+      config: { description: "Script-to-Storyboard-to-Trailer Generator service" },
+    },
   },
   {
     url: "https://x402.org/facilitator",

@@ -1,6 +1,62 @@
 {
   "services": [
     {
+      "id": "trailer-generator",
+      "name": "Script-to-Trailer Generator",
+      "description": "Turn a script or idea into a pitch-ready visual trailer using AI",
+      "endpoint": "/api/trailer-generator",
+      "pricing": {
+        "amount": "0.15",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "AWS Bedrock",
+      "inputs": [
+        {
+          "name": "script",
+          "label": "Script or Idea",
+          "type": "textarea",
+          "placeholder": "Enter your script or film idea here...",
+          "required": true,
+          "rows": 8
+        },
+        {
+          "name": "style",
+          "label": "Trailer Style",
+          "type": "select",
+          "options": [
+            "cinematic",
+            "documentary",
+            "action",
+            "drama",
+            "comedy",
+            "horror",
+            "sci-fi",
+            "fantasy"
+          ],
+          "defaultValue": "cinematic",
+          "required": false
+        },
+        {
+          "name": "mood",
+          "label": "Mood/Tone",
+          "type": "select",
+          "options": [
+            "dramatic",
+            "suspenseful",
+            "uplifting",
+            "mysterious",
+            "emotional",
+            "intense",
+            "lighthearted",
+            "dark"
+          ],
+          "defaultValue": "dramatic",
+          "required": false
+        }
+      ]
+    },
+    {
       "id": "akash-chat",
       "name": "AkashChat Agent",
       "description": "Chat with various open-source AI models powered by the Akash Supercloud",
