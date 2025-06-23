@@ -53,7 +53,10 @@ interface AgentResponseData {
 }
 
 const agentResponseMapping: Record<string, (data: AgentResponseData) => string> = {
-  translate: (data) => data.translatedText || '',
+  translate: (data) => {
+    // Handle both result key (from API) and translatedText key (from interface)
+    return (typeof data.result === 'string' ? data.result : '') || data.translatedText || '';
+  },
   summarize: (data) => data.summary || '',
   "legal-assistant": (data) =>
     `**${data.jurisdiction || "Global"} Legal Information**
