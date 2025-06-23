@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
               scheme: "exact",
               network: "base-sepolia",
               maxAmountRequired: "100000",
-              resource: "http://localhost:3000/api/legal-assistant",
+              resource: "https://flow-nu-two.vercel.app/api/legal-assistant",
               description: "Legal Assistant service",
               mimeType: "application/json",
               payTo: "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF", // Replace with your actual address
