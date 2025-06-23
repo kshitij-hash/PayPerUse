@@ -67,6 +67,28 @@ const PUBLIC_ROUTES = ["/", "/sign-in"];
 export default auth((req) => {
   const pathname = req.nextUrl.pathname;
 
+  // Check if this is a paid API route
+  const paidApiRoutes = [
+    '/api/summarize',
+    '/api/translate',
+    '/api/generate-image',
+    '/api/text-generation',
+    '/api/vision-analysis',
+    '/api/write',
+    '/api/code-assistant',
+    '/api/research-assistant',
+    '/api/poetry-generator',
+    '/api/akash-chat'
+  ];
+  
+  const isPaidApiRoute = paidApiRoutes.some(route => pathname.startsWith(route));
+
+  // For paid API routes, bypass auth check and go straight to payment middleware
+  if (isPaidApiRoute) {
+    console.log(`Bypassing auth check for paid API route: ${pathname}`);
+    return baseMiddleware(req);
+  }
+
   // Allow public routes
   if (PUBLIC_ROUTES.includes(pathname)) {
     return NextResponse.next();
@@ -81,14 +103,13 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Pass through to payment middleware
-  return baseMiddleware(req);
+  // Pass through to regular routes
+  return NextResponse.next();
 });
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-    // "/((?!_next/static|_next/image|favicon.ico).*)",
-    // "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat)(/.*)?",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat)(/.*)?",
   ],
 };

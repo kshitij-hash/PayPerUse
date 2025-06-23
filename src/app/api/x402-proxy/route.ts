@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CdpClient } from '@coinbase/cdp-sdk';
 import axios from 'axios';
-import { withPaymentInterceptor } from 'x402-axios';
+import { withPaymentInterceptor, decodeXPaymentResponse } from 'x402-axios';
 import { LocalAccount } from 'viem';
 import { toAccount } from 'viem/accounts';
 
@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
         name: walletId,
         address: walletAddress as `0x${string}` | undefined,
       });
-    } catch (error: any) {
-      console.error('x402-proxy - Error getting wallet:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('x402-proxy - Error getting wallet:', err);
       return NextResponse.json(
         { error: `Wallet not found: ${walletId}` },
         { status: 404 }
@@ -120,24 +121,70 @@ export async function POST(request: NextRequest) {
       }
       
       console.log(`x402-proxy - Successful response from ${endpoint}`);
+      
+      // Log all response headers to see what's available
+      console.log('x402-proxy - Response headers:', response.headers);
+      
+      // Check if we have payment response information
+      // Try both lowercase and uppercase header names
+      const paymentResponseHeader = response.headers['x-payment-response'] || 
+                                  response.headers['X-PAYMENT-RESPONSE'];
+      
+      console.log('x402-proxy - Payment response header present:', !!paymentResponseHeader);
+      
+      if (paymentResponseHeader) {
+        try {
+          console.log('x402-proxy - Raw payment response header:', paymentResponseHeader);
+          
+          // Handle both JSON string and base64-encoded formats
+          let paymentResponse;
+          try {
+            // First try to parse as JSON string
+            paymentResponse = typeof paymentResponseHeader === 'string' 
+              ? JSON.parse(paymentResponseHeader)
+              : paymentResponseHeader;
+          } catch {
+            // If that fails, try to decode as base64
+            console.log('x402-proxy - Failed to parse as JSON, trying base64 decode');
+            paymentResponse = decodeXPaymentResponse(paymentResponseHeader);
+          }
+          
+          console.log('x402-proxy - Payment confirmed:', paymentResponse);
+          
+          // Add payment information to the response
+          return NextResponse.json({
+            ...response.data,
+            _paymentInfo: {
+              transaction: paymentResponse.transaction,
+              success: paymentResponse.success,
+              network: paymentResponse.network,
+              payer: paymentResponse.payer
+            }
+          });
+        } catch (error: unknown) {
+          console.log('x402-proxy - Failed to decode payment response:', error);
+        }
+      }
+      
       return NextResponse.json(response.data);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status: number; data: unknown }; message: string };
       // If we get a 402 Payment Required, pass it through to the client
-      if (error.response?.status === 402) {
+      if (err.response?.status === 402) {
         console.log('x402-proxy - Received 402 Payment Required');
         
         // Return the 402 response with payment details
         return NextResponse.json(
-          error.response.data,
+          err.response.data,
           { status: 402 }
         );
       }
       
       // For other errors, return appropriate error response
-      console.error(`x402-proxy - Error calling ${endpoint}:`, error.message);
+      console.error(`x402-proxy - Error calling ${endpoint}:`, err.message);
       return NextResponse.json(
-        { error: `API call failed: ${error.message}` },
-        { status: error.response?.status || 500 }
+        { error: `API call failed: ${err.message}` },
+        { status: err.response?.status || 500 }
       );
     }
     
