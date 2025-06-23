@@ -66,10 +66,39 @@ ${
 ${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
       data.disclaimer
     }*`,
-  "poetry-generator": (data) =>
-    `**${data.title || "Poem"}**\n\n${data.poem || ''}\n\n**Analysis:**\n${
-      data.analysis || 'No analysis available'
-    }`,
+  "poetry-generator": (data) => {
+    // Extract the components from the API response
+    const title = data.title || "## Poem";
+    
+    // Clean up the poem - remove the trailing marker if present
+    let poem = (data.poem as string) || '';
+    // Remove any trailing markers or partial analysis headers from the poem
+    if (typeof poem === 'string') {
+      // Remove any trailing dashes and Poetic Elements text
+      poem = poem.replace(/---[\s\S]*?\*\*Poetic Elements.*$/g, '');
+      // Also check for just the Poetic Elements text without dashes
+      poem = poem.replace(/\*\*Poetic Elements.*$/g, '');
+      // Trim any trailing whitespace
+      poem = poem.trim();
+    }
+    
+    // Format the analysis with proper markdown heading
+    let analysis = '';
+    if (typeof data.analysis === 'string') {
+      const analysisText = data.analysis;
+      
+      // Check if analysis starts with "Analysis:**" pattern
+      if (analysisText.startsWith('Analysis:**')) {
+        // Create a combined bold heading for "Poetic Elements Analysis"
+        analysis = '**Poetic Elements Analysis**\n' + analysisText.substring(11);
+      } else {
+        analysis = '**Analysis**\n' + analysisText;
+      }
+    }
+    
+    // Combine everything with proper markdown formatting
+    return `${title}\n\n${poem}\n\n${analysis}`;
+  },
   "code-assistant": (data) => {
     if (typeof data === "string") return data;
     return (data.content as string) || (data.text as string) || JSON.stringify(data);

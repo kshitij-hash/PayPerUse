@@ -21,7 +21,7 @@ export default async function User() {
 
   const user = session.user;
 
-  const wallets = await prisma.wallet.findMany({
+  const wallet = await prisma.wallet.findFirst({
     where: {
       userId: user.id,
     },
@@ -52,12 +52,8 @@ export default async function User() {
           </CardHeader>
         </Card>
 
-        {wallets.length > 0 ? (
-          <div className="space-y-4">
-            {wallets.map((wallet) => (
-              <WalletCard key={wallet.id} wallet={wallet} />
-            ))}
-          </div>
+        {wallet ? (
+          <WalletCard wallet={wallet} />
         ) : (
           <Card className="bg-gray-900/30 border border-gray-800/50 backdrop-blur-sm">
             <CardHeader>
@@ -85,5 +81,3 @@ export default async function User() {
     </div>
   );
 }
-
-

@@ -1,28 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createPublicClient, http, formatUnits, getAddress } from "viem";
-import { mainnet } from "viem/chains";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { formatUnits } from "viem";
 
-const usdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
-
-const erc20Abi = [
-  {
-    constant: true,
-    inputs: [{ name: "_owner", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ name: "balance", type: "uint256" }],
-    type: "function",
-  },
-];
-
-const publicClient = createPublicClient({
-  chain: mainnet,
-  transport: http(),
-});
+interface TokenBalance {
+  amount: {
+    amount: string;
+    decimals: number;
+  };
+  token: {
+    contractAddress: string;
+    network: string;
+  };
+}
 
 interface WalletCardProps {
   wallet: {
@@ -33,7 +26,7 @@ interface WalletCardProps {
 }
 
 export default function WalletCard({ wallet }: WalletCardProps) {
-  const [balance, setBalance] = useState<string | null>(null);
+  const [balance, setBalance] = useState<TokenBalance[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,21 +37,35 @@ export default function WalletCard({ wallet }: WalletCardProps) {
     setError(null);
 
     try {
-      const checksumAddress = getAddress(wallet.address);
-      const balance = await publicClient.readContract({
-        address: usdcContractAddress,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [checksumAddress],
+      const response = await fetch("/api/get-balances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: wallet.address,
+          network: wallet.network,
+        }),
       });
-      setBalance(formatUnits(balance as bigint, 6));
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch token balances");
+      }
+
+      if (data.success && data.balances && data.balances.balances) {
+        setBalance(data.balances.balances);
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (err) {
       setError("Failed to fetch balance.");
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-  }, [wallet.address]);
+  }, [wallet.address, wallet.network]);
 
   useEffect(() => {
     fetchBalance();
@@ -86,8 +93,22 @@ export default function WalletCard({ wallet }: WalletCardProps) {
         <p className="text-sm text-gray-300">
           Network: {wallet.network}
         </p>
-        {balance !== null && (
-            <p className="text-sm font-medium text-white">USDC Balance: {balance}</p>
+        {balance && balance.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <h4 className="text-sm font-medium text-white mb-2">Token Balances</h4>
+            <div className="space-y-1">
+              {balance.map((tokenBalance) => (
+                <div key={tokenBalance.token.contractAddress} className="flex justify-between items-center text-sm">
+                  <span className="text-gray-300">
+                    Token ({tokenBalance.token.contractAddress.slice(0, 6)}...{tokenBalance.token.contractAddress.slice(-4)})
+                  </span>
+                  <span className="font-mono text-white">
+                    {formatUnits(BigInt(tokenBalance.amount.amount), tokenBalance.amount.decimals)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
         {error && <p className="text-sm text-red-500">{error}</p>}
       </CardContent>
