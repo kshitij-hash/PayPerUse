@@ -11,9 +11,9 @@ const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' }); // 
 export async function POST(req: NextRequest) {
   try {
     // Parse the request body
-    const { prompt } = await req.json();
+    const { input } = await req.json();
     
-    if (!prompt || typeof prompt !== 'string') {
+    if (!input || typeof input !== 'string') {
       return NextResponse.json(
         { error: 'Image prompt is required and must be a string' },
         { status: 400 }
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       model: "gemini-2.0-flash-preview-image-generation",
       contents: [{
         parts: [{
-          text: prompt
+          text: input
         }]
       }],
       config: {

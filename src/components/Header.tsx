@@ -14,33 +14,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getWalletFromLocalStorage, SessionWallet } from "@/lib/sessionWalletManager";
-import { createPublicClient, http, formatUnits, getAddress } from "viem";
-import { mainnet } from "viem/chains";
+import { getWalletFromLocalStorage, SessionWallet } from "../lib/sessionWalletManager";
+import { formatUnits } from "viem";
 
-// USDC contract address on Ethereum mainnet
-const usdcContractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
-
-// ERC20 ABI for balanceOf function
-const erc20Abi = [
-  {
-    constant: true,
-    inputs: [{ name: "_owner", type: "address" }],
-    name: "balanceOf",
-    outputs: [{ name: "balance", type: "uint256" }],
-    type: "function",
-  },
-];
-
-// Create a public client for Ethereum mainnet
-const publicClient = createPublicClient({
-  chain: mainnet,
-  transport: http(),
-});
+interface TokenBalance {
+  amount: {
+    amount: string;
+    decimals: number;
+  };
+  token: {
+    contractAddress: string;
+    network: string;
+  };
+}
 
 export function WalletButton() {
   const [wallet, setWallet] = useState<SessionWallet | null>(null);
-  const [balance, setBalance] = useState<string>("0.00");
+  const [balance, setBalance] = useState<TokenBalance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,26 +42,35 @@ export function WalletButton() {
     setError(null);
 
     try {
-      // Convert to checksum address
-      const checksumAddress = getAddress(wallet.address);
-      
-      // Read USDC balance from contract
-      const rawBalance = await publicClient.readContract({
-        address: usdcContractAddress,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [checksumAddress],
+      const response = await fetch("/api/get-balances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: wallet.address,
+          network: wallet.network,
+        }),
       });
-      
-      // Format balance with 6 decimals (USDC standard)
-      setBalance(formatUnits(rawBalance as bigint, 6));
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch token balances");
+      }
+
+      if (data.success && data.balances && data.balances.balances) {
+        setBalance(data.balances.balances);
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (err) {
-      console.error("Failed to fetch balance:", err);
-      setError("Failed to fetch balance");
+      console.error("Error fetching balance:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch balance");
     } finally {
       setIsLoading(false);
     }
-  }, [wallet?.address]);
+  }, [wallet?.address, wallet?.network]);
 
   useEffect(() => {
     // Get wallet from localStorage on component mount
@@ -133,7 +132,14 @@ export function WalletButton() {
                         <span className="animate-pulse">Loading...</span>
                       </span>
                     ) : (
-                      <span className="text-sm font-bold text-purple-300">{balance}</span>
+                      <span className="text-sm font-bold text-purple-300">
+                      {balance.length > 0
+                        ? formatUnits(
+                            BigInt(balance[0].amount.amount),
+                            balance[0].amount.decimals
+                          )
+                        : "0.00"}
+                    </span>
                     )}
                     <Button 
                       onClick={fetchBalance} 

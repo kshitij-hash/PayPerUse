@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
               scheme: "exact",
               network: "base-sepolia",
               maxAmountRequired: "50000", // 0.05 USDC as defined in services.json
-              resource: "http://localhost:3000/api/akash-chat",
+              resource: "https://flow-nu-two.vercel.app/api/akash-chat",
               description: "AkashChat Agent service",
               mimeType: "application/json",
               payTo: "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF", // Same payout address as other agents

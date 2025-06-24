@@ -3,13 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
 // Initialize Gemini API client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || ''); // Add your Gemini API key to .env.local
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Maximum number of retries for API calls
-const MAX_RETRIES = 2;
+// Define models in order of preference
+const MODELS = [
+  "gemini-1.5-flash",  // Primary model (fastest)
+  "gemini-1.5-pro",    // Fallback model 1 (more capable)
+  "gemini-1.0-pro"     // Fallback model 2 (older but stable)
+];
 
-// Delay between retries (in milliseconds)
-const BASE_DELAY = 1000;
+/**
+ * Sleep for a specified number of milliseconds
+ * @param ms Milliseconds to sleep
+ * @returns Promise that resolves after the specified time
+ */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * POST handler for /api/translate
@@ -30,7 +38,7 @@ export async function POST(req: NextRequest) {
               scheme: "exact",
               network: "base-sepolia",
               maxAmountRequired: "50000",
-              resource: "http://localhost:3000/api/translate",
+              resource: "https://flow-nu-two.vercel.app/api/translate",
               description: "Translation service",
               mimeType: "application/json",
               payTo: "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF", // Replace with your actual address
@@ -64,52 +72,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Configure the model - using gemini-1.5-flash instead of pro for higher rate limits on free tier
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-        {
-          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-        },
-      ],
-    });
-
-    // Function to generate content with retry logic
-    async function generateWithRetry(prompt: string, retries = 0): Promise<string> {
-      try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text() || 'No translation generated';
-      } catch (error: any) {
-        // Check if it's a rate limit error (429)
-        if (error?.status === 429 && retries < MAX_RETRIES) {
-          // Calculate exponential backoff delay
-          const delay = BASE_DELAY * Math.pow(2, retries);
-          console.log(`Rate limit hit, retrying in ${delay}ms (attempt ${retries + 1}/${MAX_RETRIES})`);
-          
-          // Wait for the calculated delay
-          await new Promise(resolve => setTimeout(resolve, delay));
-          
-          // Retry with incremented retry count
-          return generateWithRetry(prompt, retries + 1);
-        }
-        
-        // If max retries exceeded or different error, rethrow
-        throw error;
-      }
-    }
-
-    // Generate content for translation with retry logic
-    const prompt = `Translate the following text to ${targetLanguage}. Respond only with the translated text:\n\n${text}`;
-    const translation = await generateWithRetry(prompt);
+    // Generate translation
+    const result = await generateTranslation(text, targetLanguage);
 
     // Return the translated text
-    return NextResponse.json({ result: translation }, { status: 200 });
+    return NextResponse.json({ result }, { status: 200 });
   } catch (error: any) {
     console.error('Error in translation service:', error);
     
@@ -135,5 +102,72 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+  }
+}
+
+/**
+ * Generate translation using Gemini API with model fallback and retry logic
+ * @param text Text to translate
+ * @param targetLanguage Language to translate to
+ * @returns Translated text
+ */
+async function generateTranslation(text: string, targetLanguage: string): Promise<string> {
+  // Create the prompt for translation
+  const translationPrompt = `Translate the following text to ${targetLanguage}. Respond only with the translated text:\n\n${text}`;
+  
+  // Try each model with exponential backoff
+  let translation = '';
+  
+  // Helper function to generate content with retry logic
+  async function generateWithRetry(prompt: string): Promise<string> {
+    for (const modelName of MODELS) {
+      const maxRetries = 3;
+      let retryCount = 0;
+      let retryDelay = 1000;
+      
+      while (retryCount < maxRetries) {
+        try {
+          console.log(`Trying model ${modelName} for translation, attempt ${retryCount + 1}`);
+          
+          // Configure the model with safety settings
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            safetySettings: [
+              {
+                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+              },
+            ],
+          });
+          
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          return response.text() || 'No translation generated';
+        } catch (error: any) {
+          console.error(`Error with model ${modelName}, attempt ${retryCount + 1}:`, error);
+          retryCount++;
+          
+          if (retryCount < maxRetries) {
+            // Wait before retrying with exponential backoff
+            await sleep(retryDelay);
+            retryDelay *= 2;
+          }
+        }
+      }
+    }
+    
+    throw new Error('All models failed to generate translation');
+  }
+
+  try {
+    translation = await generateWithRetry(translationPrompt);
+    return translation.trim();
+  } catch (error) {
+    console.error('Error generating translation:', error);
+    throw error;
   }
 }

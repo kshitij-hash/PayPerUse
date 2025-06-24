@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
               scheme: "exact",
               network: "base-sepolia",
               maxAmountRequired: "50000",
-              resource: "http://localhost:3000/api/summarize",
+              resource: "https://flow-nu-two.vercel.app/api/summarize",
               description: "Text summarization service",
               mimeType: "application/json",
               payTo: "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF", // Replace with your actual address

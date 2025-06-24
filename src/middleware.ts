@@ -54,7 +54,10 @@ const baseMiddleware = paymentMiddleware(
     "/api/akash-chat": {
       price: "$0.05",
       network: "base-sepolia",
-      config: { description: "Chat with various open-source AI models powered by the Akash Supercloud" },
+      config: {
+        description:
+          "Chat with various open-source AI models powered by the Akash Supercloud",
+      },
     },
   },
   {
@@ -62,33 +65,64 @@ const baseMiddleware = paymentMiddleware(
   }
 );
 
-const PUBLIC_ROUTES = ["/", "/sign-in"];
+const PUBLIC_ROUTES = ["/", "/sign-in", "/api/auth/callback/google"];
 
 export default auth((req) => {
   const pathname = req.nextUrl.pathname;
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  // Check if this is a paid API route
+  const paidApiRoutes = [
+    "/api/summarize",
+    "/api/translate",
+    "/api/generate-image",
+    "/api/text-generation",
+    "/api/vision-analysis",
+    "/api/write",
+    "/api/code-assistant",
+    "/api/research-assistant",
+    "/api/poetry-generator",
+    "/api/akash-chat",
+  ];
+
+  const isPaidApiRoute = paidApiRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  // For paid API routes, bypass auth check and go straight to payment middleware
+  if (isPaidApiRoute) {
+    console.log(`Bypassing auth check for paid API route: ${pathname}`);
+    return baseMiddleware(req);
+  }
+
+  // Allow public routes and auth-related routes
+  if (PUBLIC_ROUTES.includes(pathname) || pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
+  // Get session from auth
   const session = req.auth;
-  console.log("Session:", session);
+
+  // Add debug info but don't log the entire session object
+  console.log(
+    `Middleware: Path ${pathname}, Auth ${session ? "exists" : "null"}`
+  );
 
   // Redirect unauthenticated users
   if (!session) {
+    console.log(
+      `Redirecting unauthenticated user from ${pathname} to /sign-in`
+    );
     const loginUrl = new URL("/sign-in", req.nextUrl.origin);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Pass through to payment middleware
-  return baseMiddleware(req);
+  // Pass through to regular routes
+  return NextResponse.next();
 });
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
-    // "/((?!_next/static|_next/image|favicon.ico).*)",
-    // "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat)(/.*)?",
+    "/((?!_next/static|_next/image|favicon.ico|api/auth).*)",
+    "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat)(/.*)?",
   ],
 };
