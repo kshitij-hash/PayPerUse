@@ -97,6 +97,62 @@ export default function AgentChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+/**
+ * Function for handling the store 
+ * @param messageId
+ * @param imageUrl
+ */
+  const handleStoreOnIpfs = async (messageId: string, imageUrl: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId ? { ...msg, isStoring: true, storeError: undefined } : msg
+      )
+    );
+
+    try {
+      const userWallet = getWalletFromLocalStorage();
+      if (!userWallet) {
+        throw new Error("Wallet not connected");
+      }
+
+      const response = await fetch('/api/store-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          walletId: userWallet.id,
+        }),
+      });
+
+      console.log("This is the response ->", response);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to store image on IPFS');
+      }
+
+      const { ipfsHash } = await response.json();
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, isStoring: false, ipfsHash }
+            : msg
+        )
+      );
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      console.error("Error storing on IPFS:", error);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? { ...msg, isStoring: false, storeError: error.message }
+            : msg
+        )
+      );
+    }
+  };
+
   useEffect(() => {
     const foundAgent = (services as { services: Service[] }).services.find(
       (s: Service) => s.id === agentId
@@ -181,20 +237,31 @@ export default function AgentChatPage() {
 
       const data = await response.json();
 
-      const formatResponse = agentResponseMapping[agent.id];
-      const formattedResponse = formatResponse
-        ? formatResponse(data)
-        : typeof data === "string"
-        ? data
-        : JSON.stringify(data);
+      if (agent.id === 'generate-image' && data.result) {
+        const assistantMessage: ChatMessageType = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: "Here is the image you requested:",
+          imageUrl: data.result,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        const formatResponse = agentResponseMapping[agent.id];
+        const formattedResponse = formatResponse
+          ? formatResponse(data)
+          : typeof data === "string"
+          ? data
+          : JSON.stringify(data);
 
-      const assistantMessage: ChatMessageType = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: formattedResponse,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+        const assistantMessage: ChatMessageType = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: formattedResponse,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
     } catch (err: Error | unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
       console.error("Error sending message:", err);
@@ -314,7 +381,7 @@ export default function AgentChatPage() {
 
         {/* Chat window */}
         <div className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
-          <ChatWindow messages={messages} isLoading={isLoading} />
+          <ChatWindow messages={messages} isLoading={isLoading} onStoreOnIpfs={handleStoreOnIpfs} />
         </div>
 
         {/* Input area */}

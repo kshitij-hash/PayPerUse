@@ -33,10 +33,15 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system' | 'error';
   content: string;
   timestamp: string;
-  paymentData?: any;
+  paymentData?: PaymentData;
+  imageUrl?: string;
+  ipfsHash?: string;
+  isStoring?: boolean;
+  storeError?: string;
 }
 
 export interface PaymentData {
+  [key: string]: unknown; 
   x402Version: number;
   error?: string;
   accepts: {

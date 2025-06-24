@@ -13,9 +13,10 @@ interface ChatWindowProps {
     paymentData?: Record<string, unknown>;
   }>;
   isLoading: boolean;
+  onStoreOnIpfs?: (messageId: string, imageUrl: string) => Promise<void>;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading, onStoreOnIpfs }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading }) => {
           <ChatMessage
             key={message.id || index}
             {...message}
+            onStoreOnIpfs={onStoreOnIpfs}
           />
         ))}
         

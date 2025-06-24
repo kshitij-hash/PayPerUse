@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Bot, AlertTriangle, Info, Check, Copy } from 'lucide-react';
+import Image from 'next/image';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,12 +18,36 @@ interface ChatMessageProps {
   content: string;
   timestamp: string;
   paymentData?: Record<string, unknown>;
+  onStoreOnIpfs?: (messageId: string, imageUrl: string) => Promise<void>;
+  id?: string;
+  imageUrl?: string;
+  isStoring?: boolean;
+  storeError?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp, paymentData }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({
+  role,
+  content,
+  timestamp,
+  paymentData,
+  onStoreOnIpfs,
+  id,
+  imageUrl,
+  isStoring,
+  storeError
+}) => {
   const [copied, setCopied] = useState(false);
   const { data: session } = useSession();
   const formattedTime = format(new Date(timestamp), 'h:mm a');
+  
+  const handleStoreOnIpfs = async () => {
+    if (!id || !imageUrl || !onStoreOnIpfs) return;
+    try {
+      await onStoreOnIpfs(id, imageUrl);
+    } catch (error) {
+      console.error('Error storing on IPFS:', error);
+    }
+  };
   
   const formatContent = (text: string): string => {
     try {
@@ -38,7 +63,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp, pay
     return text;
   };
 
-  const displayContent = formatContent(content);
+  // Check if the content is an image URL
+  const isImage = content.match(/^https?:\/\/.+\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i);
+  
+  // Get the display content (either markdown or just the image)
+  const displayContent = isImage ? '' : formatContent(content);
   
   const copyToClipboard = () => {
     navigator.clipboard.writeText(displayContent)
@@ -90,6 +119,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp, pay
     error: 'bg-gradient-to-r from-red-900/30 to-orange-900/20 border border-red-800/50 text-red-300 shadow-md',
   };
 
+
+
   return (
     <div className={`flex items-start space-x-4 ${role === 'user' ? 'justify-end' : ''} mb-6`}>
       {role !== 'user' && <div className="flex-shrink-0">{getAvatar()}</div>}
@@ -108,6 +139,47 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, timestamp, pay
             </Button>
           )}
           <CardContent className={`p-4 text-left ${role === 'assistant' ? 'bg-gradient-to-b from-black/0 to-purple-900/10' : ''} ${role === 'user' ? 'bg-gradient-to-b from-purple-900/5 to-pink-900/10' : ''}`}>
+            {isImage && role === 'assistant' && (
+              <div className="relative group mb-4 rounded-lg overflow-hidden border border-gray-700/50">
+                <div className="relative w-full h-64 md:h-96">
+                  <Image
+                    src={content}
+                    alt="Generated content"
+                    fill
+                    className="object-cover"
+                    unoptimized={content.startsWith('blob:')}
+                  />
+                </div>
+                {onStoreOnIpfs && id && (
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleStoreOnIpfs}
+                      disabled={isStoring}
+                      className="bg-black/70 hover:bg-black/80 text-white border-gray-600 backdrop-blur-sm shadow-lg"
+                    >
+                      {isStoring ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Storing...
+                        </>
+                      ) : (
+                        'Store on IPFS'
+                      )}
+                    </Button>
+                  </div>
+                )}
+                {storeError && (
+                  <div className="absolute bottom-3 left-3 right-3 bg-red-900/80 text-red-100 text-xs p-2 rounded-md backdrop-blur-sm">
+                    Failed to store: {storeError}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="prose prose-invert max-w-none prose-p:text-gray-200 prose-headings:text-white prose-headings:bg-clip-text prose-headings:text-transparent prose-headings:bg-gradient-to-r prose-headings:from-purple-400 prose-headings:to-pink-400 prose-strong:text-purple-300 prose-a:text-purple-400 prose-a:no-underline hover:prose-a:text-pink-400 hover:prose-a:underline prose-blockquote:text-gray-300 prose-blockquote:border-purple-500 prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic">
               <ReactMarkdown
                 components={{
