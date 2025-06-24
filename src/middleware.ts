@@ -59,6 +59,11 @@ const baseMiddleware = paymentMiddleware(
           "Chat with various open-source AI models powered by the Akash Supercloud",
       },
     },
+    "/api/legal-assistant": {
+      price: "$0.10",
+      network: "base-sepolia",
+      config: { description: "Legal assistant service using Gemini AI" },
+    },
   },
   {
     url: "https://x402.org/facilitator",
@@ -82,6 +87,7 @@ export default auth((req) => {
     "/api/research-assistant",
     "/api/poetry-generator",
     "/api/akash-chat",
+    "/api/legal-assistant"
   ];
 
   const isPaidApiRoute = paidApiRoutes.some((route) =>
