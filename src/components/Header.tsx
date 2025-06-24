@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "./user-avatar";
 import { Wallet, RefreshCw } from "lucide-react";
@@ -194,6 +195,7 @@ export function WalletButton() {
 
 export function Header() {
   const pathname = usePathname();
+  const { status } = useSession();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-sm border-b border-gray-800/50">
@@ -211,8 +213,8 @@ export function Header() {
               Services
             </Button>
           </Link>}
-          <WalletButton />
-          {pathname !== "/user" && <UserAvatar />}
+          {status === "authenticated" && <WalletButton />}
+          {pathname !== "/user" && pathname !== "/sign-in" && <UserAvatar />}
         </nav>
       </div>
     </header>

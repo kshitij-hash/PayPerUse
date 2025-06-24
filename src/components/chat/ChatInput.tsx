@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Service, InputField } from '../../types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,19 @@ interface ChatInputProps {
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, agent }) => {
   const [message, setMessage] = useState('');
   const [showAdditionalInputs, setShowAdditionalInputs] = useState(false);
-  const [additionalInputs, setAdditionalInputs] = useState<AdditionalInputs>({});
+    const [additionalInputs, setAdditionalInputs] = useState<AdditionalInputs>({});
+
+  useEffect(() => {
+    if (agent) {
+      const defaultInputs = agent.inputs.reduce((acc, input) => {
+        if (input.defaultValue) {
+          acc[input.name] = input.defaultValue;
+        }
+        return acc;
+      }, {} as AdditionalInputs);
+      setAdditionalInputs(defaultInputs);
+    }
+  }, [agent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

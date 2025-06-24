@@ -65,7 +65,7 @@ const baseMiddleware = paymentMiddleware(
   }
 );
 
-const PUBLIC_ROUTES = ["/", "/sign-in", "/api/auth/callback/google"];
+const PUBLIC_ROUTES = ["/", "/sign-in", "/api/auth/callback/google", "/services", "/api/services"];
 
 export default auth((req) => {
   const pathname = req.nextUrl.pathname;

@@ -43,8 +43,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     }
     return text;
   };
-
-  console.log(content)
   const displayContent = formatContent(content);
 
   if (displayContent.startsWith("data:image/jpeg;base64,")) {
@@ -154,7 +152,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             </Button>
           )}
           <CardContent
-            className={`p-4 text-left ${role === "assistant" ? "" : ""} ${
+            className={`px-4 py-0 text-left ${role === "assistant" ? "" : ""} ${
               role === "user" ? "" : ""
             }`}
           >
@@ -166,7 +164,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                   h2: (props) => <h2 className="text-lg font-bold text-white mt-3 mb-2" {...props} />,
                   h3: (props) => <h3 className="text-md font-bold text-white mt-2 mb-1" {...props} />,
                   h4: (props) => <h4 className="text-base font-bold text-white mt-2 mb-1" {...props} />,
-                  p: (props) => <p className="text-white my-2" {...props} />,
+                  p: (props) => <p className="text-white" {...props} />,
                   strong: (props) => <strong className="font-bold text-purple-300" {...props} />,
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
                   code({ node, inline, className, children, ...props }: any) {

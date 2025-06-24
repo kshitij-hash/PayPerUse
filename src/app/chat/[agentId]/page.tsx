@@ -57,7 +57,10 @@ const agentResponseMapping: Record<string, (data: AgentResponseData) => string> 
     // Handle both result key (from API) and translatedText key (from interface)
     return (typeof data.result === 'string' ? data.result : '') || data.translatedText || '';
   },
-  summarize: (data) => data.summary || '',
+  summarize: (data) => {
+    if (typeof data === "string") return data;
+    return data.result as string || '';
+  },
   "legal-assistant": (data) =>
     `**${data.jurisdiction || "Global"} Legal Information**
 
@@ -115,9 +118,9 @@ ${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
     return (data.content as string) || (data.text as string) || JSON.stringify(data);
   },
   "gemini-text": (data) =>
-    typeof data === "string" ? data : (data.result as string) || JSON.stringify(data),
+    typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
   "gemini-vision": (data) =>
-    typeof data === "string" ? data : (data.result as string) || JSON.stringify(data),
+    typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
 };
 
 export default function AgentChatPage() {

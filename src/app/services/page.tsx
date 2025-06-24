@@ -136,11 +136,11 @@ export default function ServicesPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="border-t border-gray-800/50 pt-4 mt-4 flex justify-between items-center">
-                  <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                  <Button variant="outline" className="border-gray-700 hover:bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:text-white hover:transition-all hover:duration-300 hover:transform hover:cursor-pointer">
                     View Details
                   </Button>
                   <Link href={`/chat/${service.id}`} passHref>
-                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105">
+                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105 hover:cursor-pointer">
                       Try It <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>

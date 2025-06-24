@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     
     // Create axios instance with payment interceptor
     const axiosInstance = axios.create({ 
-      baseURL: 'https://flow-nu-two.vercel.app' 
+      baseURL: 'http://localhost:3000' 
     });
     
     // Add a custom interceptor to convert payment header names to uppercase

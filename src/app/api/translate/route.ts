@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     
     // Parse the request body
     const { text, targetLanguage } = await req.json();
+    console.log(text, targetLanguage);
     
     if (!text || typeof text !== 'string') {
       return NextResponse.json(
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
 
     // Return the translated text
     return NextResponse.json({ result }, { status: 200 });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error in translation service:', error);
     
@@ -147,6 +149,7 @@ async function generateTranslation(text: string, targetLanguage: string): Promis
           const result = await model.generateContent(prompt);
           const response = await result.response;
           return response.text() || 'No translation generated';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error(`Error with model ${modelName}, attempt ${retryCount + 1}:`, error);
           retryCount++;
