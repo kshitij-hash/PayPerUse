@@ -2,16 +2,11 @@
 
 import React, { useEffect, useRef } from 'react';
 import ChatMessage from './ChatMessage';
+import { type ChatMessage as ChatMessageType } from '../../types';
 import { Bot } from 'lucide-react';
 
 interface ChatWindowProps {
-  messages: Array<{
-    id?: string;
-    role: 'user' | 'assistant' | 'system' | 'error';
-    content: string;
-    timestamp: string;
-    paymentData?: Record<string, unknown>;
-  }>;
+  messages: Array<Omit<ChatMessageType, 'id'> & { id?: string }>;
   isLoading: boolean;
   onStoreOnIpfs?: (messageId: string, imageUrl: string) => Promise<void>;
 }
@@ -30,8 +25,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading, onStoreOnI
       <div className="max-w-4xl mx-auto space-y-4 py-4">
         {messages.map((message, index) => (
           <ChatMessage
-            key={message.id || index}
-            {...message}
+            key={message.id || `msg-${index}`}
+            message={{...message, id: message.id || `msg-temp-${index}`}}
             onStoreOnIpfs={onStoreOnIpfs}
           />
         ))}

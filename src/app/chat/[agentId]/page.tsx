@@ -9,7 +9,7 @@ import { WalletButton } from "@/components/Header";
 import ChatWindow from "../../../components/chat/ChatWindow";
 import ChatInput from "../../../components/chat/ChatInput";
 import AgentInfoPanel from "../../../components/chat/AgentInfoPanel";
-import { Service, ChatMessage as ChatMessageType } from "../../../types";
+import { Service, ChatMessage } from "../../../types";
 import services from "../../../../services.json";
 import { getWalletFromLocalStorage } from "../../../lib/sessionWalletManager";
 
@@ -61,18 +61,16 @@ const agentResponseMapping: Record<string, (data: AgentResponseData) => string> 
   "legal-assistant": (data) =>
     `**${data.jurisdiction || "Global"} Legal Information**
 
-${
-      data.information || ''
+${data.information || ''
     }
 
 **Relevant Laws:**
-${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
-      data.disclaimer
+${data.relevantLaws?.join("\n") || 'None available'}\n\n*${data.disclaimer
     }*`,
   "poetry-generator": (data) => {
     // Extract the components from the API response
     const title = data.title || "## Poem";
-    
+
     // Clean up the poem - remove the trailing marker if present
     let poem = (data.poem as string) || '';
     // Remove any trailing markers or partial analysis headers from the poem
@@ -84,12 +82,12 @@ ${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
       // Trim any trailing whitespace
       poem = poem.trim();
     }
-    
+
     // Format the analysis with proper markdown heading
     let analysis = '';
     if (typeof data.analysis === 'string') {
       const analysisText = data.analysis;
-      
+
       // Check if analysis starts with "Analysis:**" pattern
       if (analysisText.startsWith('Analysis:**')) {
         // Create a combined bold heading for "Poetic Elements Analysis"
@@ -98,7 +96,7 @@ ${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
         analysis = '**Analysis**\n' + analysisText;
       }
     }
-    
+
     // Combine everything with proper markdown formatting
     return `${title}\n\n${poem}\n\n${analysis}`;
   },
@@ -125,15 +123,15 @@ export default function AgentChatPage() {
   const agentId = params.agentId as string;
 
   const [agent, setAgent] = useState<Service | null>(null);
-  const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-/**
- * Function for handling the store 
- * @param messageId
- * @param imageUrl
- */
+  /**
+   * Function for handling the store 
+   * @param messageId
+   * @param imageUrl
+   */
   const handleStoreOnIpfs = async (messageId: string, imageUrl: string) => {
     setMessages((prev) =>
       prev.map((msg) =>
@@ -191,8 +189,8 @@ export default function AgentChatPage() {
     );
     if (foundAgent) {
       setAgent(foundAgent);
-      const welcomeMessage: ChatMessageType = {
-        id: Date.now().toString(),
+      const welcomeMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         role: "system",
         content: `Welcome to ${foundAgent.name}! How can I help you today?`,
         timestamp: new Date().toISOString(),
@@ -209,8 +207,8 @@ export default function AgentChatPage() {
   ) => {
     if (!agent) return;
 
-    const userMessage: ChatMessageType = {
-      id: Date.now().toString(),
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
       role: "user",
       content: message,
       timestamp: new Date().toISOString(),
@@ -227,8 +225,8 @@ export default function AgentChatPage() {
 
       const userWallet = getWalletFromLocalStorage();
       if (!userWallet) {
-        const systemMessage: ChatMessageType = {
-          id: Date.now().toString(),
+        const systemMessage: ChatMessage = {
+          id: crypto.randomUUID(),
           role: "system",
           content:
             "You need to connect a wallet before you can use this service. Please go to the wallet page to create or connect a wallet.",
@@ -254,8 +252,8 @@ export default function AgentChatPage() {
       if (!response.ok) {
         if (response.status === 402) {
           const paymentData = await response.json();
-          const paymentMessage: ChatMessageType = {
-            id: Date.now().toString(),
+          const paymentMessage: ChatMessage = {
+            id: crypto.randomUUID(),
             role: "system",
             content: "Payment required. Please check your wallet and try again.",
             paymentData,
@@ -268,37 +266,25 @@ export default function AgentChatPage() {
       }
 
       const data = await response.json();
-
-      if (agent.id === 'generate-image' && data.result) {
-        const assistantMessage: ChatMessageType = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "Here is the image you requested:",
-          imageUrl: data.result,
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      } else {
-        const formatResponse = agentResponseMapping[agent.id];
-        const formattedResponse = formatResponse
-          ? formatResponse(data)
-          : typeof data === "string"
+      const formatResponse = agentResponseMapping[agent.id];
+      const formattedResponse = formatResponse
+        ? formatResponse(data)
+        : typeof data === "string"
           ? data
           : JSON.stringify(data);
 
-        const assistantMessage: ChatMessageType = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: formattedResponse,
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: formattedResponse,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err: Error | unknown) {
       const error = err instanceof Error ? err : new Error(String(err));
       console.error("Error sending message:", err);
-      const errorMessage: ChatMessageType = {
-        id: Date.now().toString(),
+      const errorMessage: ChatMessage = {
+        id: crypto.randomUUID(),
         role: "error",
         content: `Error: ${error.message || "Failed to send message"}`,
         timestamp: new Date().toISOString(),
@@ -341,9 +327,9 @@ export default function AgentChatPage() {
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -inset-[10px] opacity-30">
           {Array.from({ length: 20 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute rounded-full bg-purple-500/10" 
+            <div
+              key={i}
+              className="absolute rounded-full bg-purple-500/10"
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
@@ -388,9 +374,9 @@ export default function AgentChatPage() {
                 {agent?.pricing?.amount ? `$${agent.pricing.amount} / request` : 'AI Agent'}
               </div>
             </div>
-            
+
             <WalletButton />
-            
+
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>

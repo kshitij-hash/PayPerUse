@@ -13,30 +13,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
+import { ChatMessage as ChatMessageType } from '../../types';
 
 interface ChatMessageProps {
-  role: "user" | "assistant" | "system" | "error";
-  content: string;
-  timestamp: string;
-  paymentData?: Record<string, unknown>;
+  message: ChatMessageType;
   onStoreOnIpfs?: (messageId: string, imageUrl: string) => Promise<void>;
-  id?: string;
-  imageUrl?: string;
-  isStoring?: boolean;
-  storeError?: string;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({
-  role,
-  content,
-  timestamp,
-  paymentData,
-  onStoreOnIpfs,
-  id,
-  imageUrl,
-  isStoring,
-  storeError
-}) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, onStoreOnIpfs }) => {
+  if (!message) throw new Error('Message is null');
+  const { id, content, timestamp, paymentData, role, imageUrl, isStoring, storeError, ipfsUrl } = message;
   const [copied, setCopied] = useState(false);
   const { data: session } = useSession();
   const formattedTime = format(new Date(timestamp), 'h:mm a');
@@ -71,7 +57,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   console.log(content)
   const displayContent = isImage ? '' : formatContent(content);
 
-  if (displayContent.startsWith("data:image/jpeg;base64,")) {
+    if (displayContent.startsWith("data:image/jpeg;base64,")) {
     return (
       <div className="flex items-start space-x-4 mb-6">
         <div className="flex-shrink-0">
@@ -85,8 +71,35 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             <img
               src={displayContent}
               alt="Image"
-              className="max-w-full h-auto"
+              className="max-w-full h-auto rounded-md"
             />
+            {onStoreOnIpfs && (
+              <div className="mt-4 flex items-center space-x-4">
+                {isStoring ? (
+                  <div className="text-gray-400">Storing on IPFS...</div>
+                ) : ipfsUrl ? (
+                  <a
+                    href={ipfsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:underline"
+                  >
+                    View on IPFS
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (id) {
+                        onStoreOnIpfs(id, content);
+                      }
+                    }}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+                  >
+                    Store on IPFS
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
