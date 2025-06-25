@@ -15,6 +15,7 @@ model User {
   image         String?
 
   wallets Wallet[]
+  pinataFiles PinataFile[]
 
   accounts      Account[]
   sessions      Session[]
@@ -91,4 +92,22 @@ model Authenticator {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
+}
+
+model PinataFile {
+  id          String    @id @default(cuid())
+  ipfsHash    String    @unique
+  pinSize     Int
+  timestamp   DateTime
+  name        String
+  numberOfFiles Int
+  mimeType    Boolean
+  groupId     String?
+  keyValues   Json?
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

@@ -13,14 +13,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 
-interface ChatMessageProps {
-  role: "user" | "assistant" | "system" | "error";
-  content: string;
-  timestamp: string;
-  paymentData?: Record<string, unknown>;
+import { ChatMessage as ChatMessageType } from "../../types";
+import { Dispatch, SetStateAction } from "react";
+
+interface ChatMessageProps extends ChatMessageType {
+  setMessages: Dispatch<SetStateAction<ChatMessageType[]>>;
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
+  setMessages,
   role,
   content,
   timestamp,
@@ -28,6 +29,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const { data: session } = useSession();
+  const [isUploading, setIsUploading] = useState(false);
   const formattedTime = format(new Date(timestamp), "h:mm a");
 
   const formatContent = (text: string): string => {
@@ -44,7 +46,46 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     return text;
   };
   const displayContent = formatContent(content);
+  
+  //make a function for handling the upload to IPFS 
+  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
 
+  const uploadFile = async () => {
+    setIsUploading(true);
+    setIpfsUrl(null);
+    try {
+      const response = await fetch('/api/ipfs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageBase64: displayContent }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload to IPFS');
+      }
+
+      const data = await response.json();
+      setIpfsUrl(data.ipfsUrl);
+
+      const successMessage: ChatMessageType = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `Your image has been successfully uploaded to IPFS.\n\n**IPFS URL:** [${data.ipfsUrl}](${data.ipfsUrl})`,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, successMessage]);
+    } catch (error) {
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      alert(`Error uploading to IPFS: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
   if (displayContent.startsWith("data:image/jpeg;base64,")) {
     return (
       <div className="flex items-start space-x-4 mb-6">
@@ -61,6 +102,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               alt="Image"
               className="max-w-full h-auto"
             />
+            <div className="mt-4">
+              <Button
+                onClick={uploadFile}
+                disabled={isUploading}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+              >
+                {isUploading ? "Uploading..." : "Upload to IPFS"}
+              </Button>
+              {ipfsUrl && (
+                <div className="mt-2 text-sm text-green-400">
+                  <p>Successfully uploaded to IPFS!</p>
+                  <a href={ipfsUrl} target="_blank" rel="noopener noreferrer" className="underline">View on IPFS</a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

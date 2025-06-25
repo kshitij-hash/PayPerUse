@@ -4,18 +4,16 @@ import React, { useEffect, useRef } from 'react';
 import ChatMessage from './ChatMessage';
 import { Bot } from 'lucide-react';
 
+import { ChatMessage as ChatMessageType } from "../../types";
+import { Dispatch, SetStateAction } from "react";
+
 interface ChatWindowProps {
-  messages: Array<{
-    id?: string;
-    role: 'user' | 'assistant' | 'system' | 'error';
-    content: string;
-    timestamp: string;
-    paymentData?: Record<string, unknown>;
-  }>;
+  messages: ChatMessageType[];
   isLoading: boolean;
+  setMessages: Dispatch<SetStateAction<ChatMessageType[]>>;
 }
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading, setMessages }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,6 +28,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading }) => {
         {messages.map((message, index) => (
           <ChatMessage
             key={message.id || index}
+            setMessages={setMessages}
             {...message}
           />
         ))}

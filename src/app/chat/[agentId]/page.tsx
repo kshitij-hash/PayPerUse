@@ -349,7 +349,7 @@ export default function AgentChatPage() {
 
         {/* Chat window */}
         <div className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
-          <ChatWindow messages={messages} isLoading={isLoading} />
+          <ChatWindow messages={messages} isLoading={isLoading} setMessages={setMessages} />
         </div>
 
         {/* Input area */}
