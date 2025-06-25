@@ -1,4 +1,4 @@
-# FlowForge: The Universal API Adapter for the Paid Web
+# FlowForge: The Universal API Adapter for the Paid Web 
 
 FlowForge is a powerful backend solution designed to bridge the gap between your application and the growing ecosystem of paid APIs. It provides a seamless way to integrate services that require per-call micropayments, handling all the complexities of cryptocurrency transactions, wallet management, and multi-step workflows so you can focus on building great products.
 
