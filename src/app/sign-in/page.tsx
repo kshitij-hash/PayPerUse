@@ -26,7 +26,7 @@ const Page = async () => {
               Sign In
             </CardTitle>
             <CardDescription className="text-gray-400">
-              Authenticate to access your FlowForge account
+              Authenticate to access your PayPerUse account
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center space-y-6 pt-4">

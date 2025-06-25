@@ -58,7 +58,7 @@ export function HowItWorks() {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            How Flow Works
+            How PayPerUse Works
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
             From wallet funding to revenue distribution, everything is automated and decentralized

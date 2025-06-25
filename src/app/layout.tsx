@@ -15,8 +15,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FlowForge - AI Workflow Platform",
-  description: "Run AI agents and workflows, manage your wallet, and access paid API services",
+  title: "PayPerUse - Composable AI Agent Marketplace",
+  keywords: [
+    "AI Agent Marketplace",
+    "Composable AI Agents",
+    "AI Workflow Platform",
+    "AI Agents",
+    "AI Workflows",
+    "AI Services",
+    "AI Agents",
+    "AI Workflows",
+    "AI Services",
+    "AI Agents",
+    "AI Workflows",
+    "AI Services",
+    "Decentralized payments",
+    "Pay-per-call",
+  ],
+  description:
+    "PayPerUse is a decentralized AI agent marketplace where users can use AI agents and pay-per-call.",
 };
 
 export default function RootLayout({
@@ -30,9 +47,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <CdpWalletProvider>
-            {children}
-          </CdpWalletProvider>
+          <CdpWalletProvider>{children}</CdpWalletProvider>
         </Providers>
       </body>
     </html>

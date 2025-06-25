@@ -26,6 +26,7 @@ export default async function User() {
       userId: user.id,
     },
   });
+  console.log("wallet", wallet);
 
   return (
     <div className="relative flex flex-col items-center min-h-screen pt-20 overflow-hidden">

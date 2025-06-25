@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getWalletFromLocalStorage, SessionWallet } from "../lib/sessionWalletManager";
 import { formatUnits } from "viem";
+import Image from "next/image";
+import payperuseLogo from "../../public/ppu_logo.png"
 
 interface TokenBalance {
   amount: {
@@ -201,9 +203,12 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-sm border-b border-gray-800/50">
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 group">
-          <span className="text-lg font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent animate-gradient">
-            Flow
-          </span>
+          <Image
+            src={payperuseLogo}
+            alt="PayPerUse"
+            width={130}
+            height={130}
+          />
         </Link>
         <nav className="hidden md:flex items-center gap-4">
           {pathname !== "/services" && <Link href="/services" passHref>

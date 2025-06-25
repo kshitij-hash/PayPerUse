@@ -67,12 +67,12 @@ export function Hero() {
 
             {/* Main heading */}
             <div>
-              <h1 className="text-6xl lg:text-8xl font-bold mb-6 leading-tight">
+              <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent animate-gradient">
-                  Flow
+                  PayPerUse
                 </span>
               </h1>
-              <h2 className="text-2xl lg:text-4xl font-light text-gray-300 mb-6 leading-relaxed">
+              <h2 className="text-xl lg:text-2xl font-light text-gray-300 mb-6 leading-relaxed">
                 Composable AI Agent
                 <br />
                 <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent font-semibold">
@@ -82,7 +82,7 @@ export function Hero() {
             </div>
 
             {/* Description */}
-            <p className="text-lg lg:text-xl text-gray-400 leading-relaxed max-w-2xl">
+            <p className="text-xl lg:text-lg text-gray-400 leading-relaxed max-w-2xl">
               Build, monetize, and run multi-step AI workflows with seamless payments. Each service call is secured with
               x402 headers while revenue flows automatically to creators through decentralized infrastructure.
             </p>

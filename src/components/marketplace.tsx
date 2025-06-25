@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Star, Zap, TrendingUp, Users } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Star, Zap, TrendingUp, Users } from "lucide-react";
+import Link from "next/link";
 
 const agents = [
   {
@@ -42,10 +43,10 @@ const agents = [
     tags: ["Data", "Analytics", "Visualization"],
     gradient: "from-yellow-500 to-orange-500",
   },
-]
+];
 
 export function Marketplace() {
-  const [hoveredAgent, setHoveredAgent] = useState<number | null>(null)
+  const [hoveredAgent, setHoveredAgent] = useState<number | null>(null);
 
   return (
     <section className="py-24 px-4 relative">
@@ -55,7 +56,8 @@ export function Marketplace() {
             Marketplace Spotlight
           </h2>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Discover top-performing AI agents and workflows created by our community
+            Discover top-performing AI agents and workflows created by our
+            community
           </p>
         </div>
 
@@ -104,7 +106,9 @@ export function Marketplace() {
                 {agent.name}
               </h3>
 
-              <p className="text-gray-400 text-sm mb-4 leading-relaxed">{agent.description}</p>
+              <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                {agent.description}
+              </p>
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -125,15 +129,20 @@ export function Marketplace() {
                   <span className="text-lg font-bold">${agent.price}</span>
                   <span className="text-gray-400 text-sm ml-1">per call</span>
                 </div>
-                <Button
-                  size="sm"
-                  className={`
-                  bg-gradient-to-r ${agent.gradient} hover:shadow-lg transition-all duration-300
+                <Link href="/services">
+                  <Button
+                    size="sm"
+                    className={`
+                      cursor-pointer
+                  bg-gradient-to-r ${
+                    agent.gradient
+                  } hover:shadow-lg transition-all duration-300
                   ${hoveredAgent === index ? "shadow-lg scale-105" : ""}
                 `}
-                >
-                  Try Now
-                </Button>
+                  >
+                    Try Now
+                  </Button>
+                </Link>
               </div>
             </div>
           ))}
@@ -151,12 +160,14 @@ export function Marketplace() {
               className="p-6 rounded-2xl bg-gradient-to-br from-gray-900/40 to-gray-800/20 border border-gray-700/30 backdrop-blur-sm"
             >
               <stat.icon className="w-8 h-8 text-purple-400 mx-auto mb-4" />
-              <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
+              <div className="text-3xl font-bold text-white mb-2">
+                {stat.value}
+              </div>
               <div className="text-gray-400">{stat.label}</div>
             </div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }
