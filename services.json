@@ -42,15 +42,15 @@
     },
     {
       "id": "gemini-text",
-      "name": "Gemini Text Generation",
-      "description": "Generates text using Google's Gemini AI",
+      "name": "Text Generation",
+      "description": "Generates text using PayPerUse's AI",
       "endpoint": "https://payperuse.online/api/text-generation",
       "pricing": {
         "amount": "0.005",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "input",
@@ -64,15 +64,15 @@
     },
     {
       "id": "gemini-vision",
-      "name": "Gemini Vision Analysis",
-      "description": "Analyzes images and generates text using Google's Gemini Vision",
+      "name": "Vision Analysis",
+      "description": "Analyzes images and generates text using PayePerUse's Vision",
       "endpoint": "https://payperuse.online/api/vision-analysis",
       "pricing": {
         "amount": "0.01",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "imageUrl",
@@ -94,14 +94,14 @@
     {
       "id": "summarize",
       "name": "Summarizer",
-      "description": "Summarizes text using Google's Gemini AI",
+      "description": "Summarizes text using PayPerUse's AI",
       "endpoint": "https://payperuse.online/api/summarize",
       "pricing": {
         "amount": "0.05",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "input",
@@ -123,7 +123,7 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "topic",
@@ -174,14 +174,14 @@
     {
       "id": "translate",
       "name": "Translator",
-      "description": "Translates text to different languages using Google's Gemini AI",
+      "description": "Translates text to different languages using PayPerUse's AI",
       "endpoint": "https://payperuse.online/api/translate",
       "pricing": {
         "amount": "0.05",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "text",
@@ -213,14 +213,14 @@
     {
       "id": "generate-image",
       "name": "Image Generator",
-      "description": "Generates images from text descriptions using Google's Gemini AI",
+      "description": "Generates images from text descriptions using PayPerUse's AI",
       "endpoint": "https://payperuse.online/api/generate-image",
       "pricing": {
         "amount": "0.10",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "prompt",
@@ -242,7 +242,7 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "query",
@@ -295,7 +295,7 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "topic",
@@ -357,7 +357,7 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "topic",
@@ -417,7 +417,7 @@
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
-      "provider": "Google Gemini",
+      "provider": "PayPerUse",
       "inputs": [
         {
           "name": "query",
