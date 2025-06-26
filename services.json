@@ -4,7 +4,7 @@
       "id": "akash-chat",
       "name": "AkashChat Agent",
       "description": "Chat with various open-source AI models powered by the Akash Supercloud",
-      // "endpoint": "https://payperuse.online/api/akash-chat",
+      "endpoint": "https://payperuse.online/api/akash-chat",
       "pricing": {
         "amount": "0.05",
         "currency": "USDC"
@@ -44,7 +44,7 @@
       "id": "text",
       "name": "Text Generation",
       "description": "Generates text using PayPerUse's AI",
-      // "endpoint": "https://payperuse.online/api/text-generation",
+      "endpoint": "https://payperuse.online/api/text-generation",
       "pricing": {
         "amount": "0.005",
         "currency": "USDC"
@@ -66,7 +66,7 @@
       "id": "vision",
       "name": "Vision Analysis",
       "description": "Analyzes images and generates text using PayePerUse's Vision",
-      // "endpoint": "https://payperuse.online/api/vision-analysis",
+      "endpoint": "https://payperuse.online/api/vision-analysis",
       "pricing": {
         "amount": "0.01",
         "currency": "USDC"
@@ -95,7 +95,7 @@
       "id": "summarize",
       "name": "Summarizer",
       "description": "Summarizes text using PayPerUse's AI",
-      // "endpoint": "https://payperuse.online/api/summarize",
+      "endpoint": "https://payperuse.online/api/summarize",
       "pricing": {
         "amount": "0.05",
         "currency": "USDC"
@@ -117,7 +117,7 @@
       "id": "write",
       "name": "Content Writer",
       "description": "Generates high-quality content on any topic",
-      // "endpoint": "https://payperuse.online/api/write",
+      "endpoint": "https://payperuse.online/api/write",
       "pricing": {
         "amount": "0.07",
         "currency": "USDC"
@@ -175,7 +175,7 @@
       "id": "translate",
       "name": "Translator",
       "description": "Translates text to different languages using PayPerUse's AI",
-      // "endpoint": "https://payperuse.online/api/translate",
+      "endpoint": "https://payperuse.online/api/translate",
       "pricing": {
         "amount": "0.05",
         "currency": "USDC"
@@ -214,7 +214,7 @@
       "id": "generate-image",
       "name": "Image Generator",
       "description": "Generates images from text descriptions using PayPerUse's AI",
-      // "endpoint": "https://payperuse.online/api/generate-image",
+      "endpoint": "https://payperuse.online/api/generate-image",
       "pricing": {
         "amount": "0.10",
         "currency": "USDC"
@@ -236,7 +236,7 @@
       "id": "code-assistant",
       "name": "Code Assistant",
       "description": "Helps with coding questions, debugging, and code generation",
-      // "endpoint": "https://payperuse.online/api/code-assistant",
+      "endpoint": "https://payperuse.online/api/code-assistant",
       "pricing": {
         "amount": "0.08",
         "currency": "USDC"
@@ -289,7 +289,7 @@
       "id": "research-assistant",
       "name": "Research Assistant",
       "description": "Conducts comprehensive research on any topic",
-      // "endpoint": "https://payperuse.online/api/research-assistant",
+      "endpoint": "https://payperuse.online/api/research-assistant",
       "pricing": {
         "amount": "0.12",
         "currency": "USDC"
@@ -351,7 +351,7 @@
       "id": "poetry-generator",
       "name": "Poetry Generator",
       "description": "Creates beautiful poems in various styles and moods",
-      // "endpoint": "https://payperuse.online/api/poetry-generator",
+      "endpoint": "https://payperuse.online/api/poetry-generator",
       "pricing": {
         "amount": "0.06",
         "currency": "USDC"
@@ -411,7 +411,7 @@
       "id": "legal-assistant",
       "name": "Global Legal Assistant",
       "description": "Provides legal information and assistance on laws from countries around the world",
-      // "endpoint": "https://payperuse.online/api/legal-assistant",
+      "endpoint": "https://payperuse.online/api/legal-assistant",
       "pricing": {
         "amount": "0.10",
         "currency": "USDC"
