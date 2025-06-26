@@ -32,61 +32,149 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const formattedTime = format(new Date(timestamp), "h:mm a");
 
-  const formatContent = (text: string): string => {
+  // Parse the content and extract result, collection details, NFT data, and step information
+  const [displayContent, collectionDetails, nftData, step] = (() => {
     try {
-      if (text.trim().startsWith('{"result":')) {
-        const parsedContent = JSON.parse(text);
+      if (
+        typeof content === "string" &&
+        content.trim().startsWith('{"result":')
+      ) {
+        const parsedContent = JSON.parse(content);
         if (parsedContent.result) {
-          return parsedContent.result.replace(/\\n/g, "\n");
+          return [
+            parsedContent.result.replace(/\\n/g, "\n"),
+            parsedContent.collectionDetails,
+            parsedContent.nftData,
+            parsedContent.step || 0,
+            parsedContent.nextStep,
+          ];
         }
       }
     } catch (e) {
       console.error("Error parsing message content:", e);
     }
-    return text;
-  };
-  const displayContent = formatContent(content);
-  
-  //make a function for handling the upload to IPFS 
-  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
+    return [content, undefined, undefined, 0, undefined];
+  })();
 
-  const uploadFile = async () => {
+  // State for handling the step-wise NFT generation process
+  const [ipfsUrl, setIpfsUrl] = useState<string | null>(null);
+  const [imageIpfsHash, setImageIpfsHash] = useState<string | null>(null);
+  const [metadataUri, setMetadataUri] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<number>(step);
+  const [processingStep, setProcessingStep] = useState<string | null>(null);
+
+  // Upload image to IPFS (Step 2)
+  const uploadToIpfs = async () => {
+    setProcessingStep("upload-to-ipfs");
     setIsUploading(true);
-    setIpfsUrl(null);
     try {
-      const response = await fetch('/api/ipfs', {
-        method: 'POST',
+      const response = await fetch("/api/nft-minting-agent/upload-to-ipfs", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ imageBase64: displayContent }),
+        body: JSON.stringify({
+          imageBase64: displayContent,
+          collectionDetails,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload to IPFS');
+        throw new Error(errorData.error || "Failed to upload to IPFS");
       }
 
       const data = await response.json();
-      setIpfsUrl(data.ipfsUrl);
+      setIpfsUrl(data.imageUri);
+      setImageIpfsHash(data.imageIpfsHash);
+      setCurrentStep(data.step);
 
       const successMessage: ChatMessageType = {
         id: Date.now().toString(),
-        role: 'assistant',
-        content: `Your image has been successfully uploaded to IPFS.\n\n**IPFS URL:** [${data.ipfsUrl}](${data.ipfsUrl})`,
+        role: "assistant",
+        content: JSON.stringify({
+          result: `Image uploaded to IPFS successfully.`,
+          collectionDetails,
+          step: data.step,
+          nextStep: data.nextStep,
+          nftData: {
+            imageUri: data.imageUri,
+            imageIpfsHash: data.imageIpfsHash,
+          },
+        }),
         timestamp: new Date().toISOString(),
       };
 
       setMessages((prevMessages) => [...prevMessages, successMessage]);
     } catch (error) {
       console.error(error);
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       alert(`Error uploading to IPFS: ${errorMessage}`);
     } finally {
       setIsUploading(false);
+      setProcessingStep(null);
     }
   };
-  if (displayContent.startsWith("data:image/jpeg;base64,")) {
+
+  // Create and upload metadata to IPFS (Step 3)
+  const createMetadata = async () => {
+    setProcessingStep("create-metadata");
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/nft-minting-agent/create-metadata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUri: ipfsUrl || nftData?.imageUri,
+          collectionDetails,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create metadata");
+      }
+
+      const data = await response.json();
+      setMetadataUri(data.metadataUri);
+      setCurrentStep(data.step);
+
+      const successMessage: ChatMessageType = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: JSON.stringify({
+          result: `NFT metadata created and uploaded to IPFS successfully.`,
+          collectionDetails,
+          step: data.step,
+          nextStep: data.nextStep,
+          nftData: {
+            imageUri: ipfsUrl || nftData?.imageUri,
+            imageIpfsHash: imageIpfsHash || nftData?.imageIpfsHash,
+            metadataUri: data.metadataUri,
+            metadataIpfsHash: data.metadataIpfsHash,
+          },
+        }),
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, successMessage]);
+    } catch (error) {
+      console.error(error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      alert(`Error creating metadata: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+      setProcessingStep(null);
+    }
+  };
+  if (
+    displayContent.startsWith("data:image/jpeg;base64,") ||
+    displayContent.startsWith("data:image/png;base64,")
+  ) {
     return (
       <div className="flex items-start space-x-4 mb-6">
         <div className="flex-shrink-0">
@@ -96,24 +184,160 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
         <div className="flex-1 pt-2 max-w-3xl">
           <div className="bg-black/40 border-l-4 border-l-purple-500 border-t border-r border-b border-gray-800/50 rounded-md p-4 shadow-lg">
+            {/* NFT Collection Details */}
+            {collectionDetails && (
+              <div className="mb-4 p-3 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/30 rounded-md">
+                <h3 className="text-lg font-bold text-purple-300 mb-2">
+                  {collectionDetails.collectionName || "NFT Collection"}
+                </h3>
+                {collectionDetails.nftName && (
+                  <h4 className="text-md font-medium text-purple-200 mb-1">
+                    {collectionDetails.nftName}
+                  </h4>
+                )}
+                {collectionDetails.description && (
+                  <p className="text-sm text-gray-300">
+                    {collectionDetails.description}
+                  </p>
+                )}
+
+                {/* NFT Metadata Links - Show when available */}
+                {nftData && (
+                  <div className="mt-3 pt-3 border-t border-purple-500/30">
+                    <h4 className="text-sm font-medium text-purple-200 mb-1">
+                      NFT Details
+                    </h4>
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      <a
+                        href={nftData.imageUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-purple-900/40 hover:bg-purple-800/50 text-purple-300 py-1 px-2 rounded flex items-center justify-between"
+                      >
+                        <span>View Image on IPFS</span>
+                        <span className="text-purple-400">→</span>
+                      </a>
+                      <a
+                        href={nftData.metadataUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-indigo-900/40 hover:bg-indigo-800/50 text-indigo-300 py-1 px-2 rounded flex items-center justify-between"
+                      >
+                        <span>View Metadata</span>
+                        <span className="text-indigo-400">→</span>
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* NFT Image */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={displayContent}
-              alt="Image"
-              className="max-w-full h-auto"
+              alt={collectionDetails?.nftName || "Generated NFT Image"}
+              className="max-w-full h-auto rounded-md border border-purple-500/30"
             />
+
+            {/* Step-wise NFT generation process UI */}
             <div className="mt-4">
-              <Button
-                onClick={uploadFile}
-                disabled={isUploading}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-              >
-                {isUploading ? "Uploading..." : "Upload to IPFS"}
-              </Button>
-              {ipfsUrl && (
+              {/* Step indicator */}
+              <div className="mb-3 flex items-center space-x-2">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    currentStep >= 1 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <div
+                  className={`h-0.5 w-4 ${
+                    currentStep >= 2 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    currentStep >= 2 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <div
+                  className={`h-0.5 w-4 ${
+                    currentStep >= 3 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    currentStep >= 3 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <span className="text-xs text-gray-400 ml-2">
+                  {currentStep === 1 && "Step 1: Image Generated"}
+                  {currentStep === 2 && "Step 2: Uploaded to IPFS"}
+                  {currentStep === 3 && "Step 3: Metadata Created"}
+                </span>
+              </div>
+
+              {/* Step 1 is complete when we have an image */}
+
+              {/* Step 2: Upload to IPFS button - show if we're at step 1 */}
+              {currentStep === 1 && !nftData?.imageUri && (
+                <Button
+                  onClick={uploadToIpfs}
+                  disabled={isUploading || processingStep === "upload-to-ipfs"}
+                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  {processingStep === "upload-to-ipfs"
+                    ? "Uploading to IPFS..."
+                    : "Upload to IPFS"}
+                </Button>
+              )}
+
+              {/* Step 3: Create Metadata button - show if we're at step 2 */}
+              {(currentStep === 2 ||
+                (nftData?.imageUri && !nftData?.metadataUri)) && (
+                <Button
+                  onClick={createMetadata}
+                  disabled={isUploading || processingStep === "create-metadata"}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded mt-2"
+                >
+                  {processingStep === "create-metadata"
+                    ? "Creating Metadata..."
+                    : "Create NFT Metadata"}
+                </Button>
+              )}
+
+              {/* Success messages for each step */}
+              {ipfsUrl && currentStep >= 2 && !nftData?.imageUri && (
                 <div className="mt-2 text-sm text-green-400">
-                  <p>Successfully uploaded to IPFS!</p>
-                  <a href={ipfsUrl} target="_blank" rel="noopener noreferrer" className="underline">View on IPFS</a>
+                  <p>Successfully uploaded image to IPFS!</p>
+                  <a
+                    href={ipfsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    View on IPFS
+                  </a>
+                </div>
+              )}
+
+              {metadataUri && currentStep >= 3 && !nftData?.metadataUri && (
+                <div className="mt-2 text-sm text-green-400">
+                  <p>Successfully created NFT metadata!</p>
+                  <a
+                    href={metadataUri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    View Metadata
+                  </a>
+                </div>
+              )}
+
+              {/* If we have complete NFT data from the response, show that instead */}
+              {nftData && nftData.metadataUri && (
+                <div className="mt-2 text-sm text-green-400">
+                  <p>NFT creation complete!</p>
                 </div>
               )}
             </div>
@@ -216,12 +440,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
-                  h1: (props) => <h1 className="text-xl font-bold text-white mt-4 mb-2" {...props} />,
-                  h2: (props) => <h2 className="text-lg font-bold text-white mt-3 mb-2" {...props} />,
-                  h3: (props) => <h3 className="text-md font-bold text-white mt-2 mb-1" {...props} />,
-                  h4: (props) => <h4 className="text-base font-bold text-white mt-2 mb-1" {...props} />,
+                  h1: (props) => (
+                    <h1
+                      className="text-xl font-bold text-white mt-4 mb-2"
+                      {...props}
+                    />
+                  ),
+                  h2: (props) => (
+                    <h2
+                      className="text-lg font-bold text-white mt-3 mb-2"
+                      {...props}
+                    />
+                  ),
+                  h3: (props) => (
+                    <h3
+                      className="text-md font-bold text-white mt-2 mb-1"
+                      {...props}
+                    />
+                  ),
+                  h4: (props) => (
+                    <h4
+                      className="text-base font-bold text-white mt-2 mb-1"
+                      {...props}
+                    />
+                  ),
                   p: (props) => <p className="text-white" {...props} />,
-                  strong: (props) => <strong className="font-bold text-purple-300" {...props} />,
+                  strong: (props) => (
+                    <strong className="font-bold text-purple-300" {...props} />
+                  ),
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || "");

@@ -44,7 +44,7 @@ interface CdpWalletContextType {
   successMessage: string | null;
   tokenBalances: TokenBalance[];
   isLoadingBalances: boolean;
-  createWallet: (fund?: boolean) => Promise<void>;
+  createWallet: () => Promise<void>;
   clearWallet: () => Promise<void>;
   fetchTokenBalances: (walletData?: SessionWallet) => Promise<void>;
   callPaidApiWithWallet: <T>(
@@ -178,15 +178,12 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
       // First try to get email from current session
       if (session && session.user && session.user.email) {
         userEmail = session.user.email;
-        console.log('Using email from current session:', userEmail);
       } else {
         // Try to refresh the session data to get email
         try {
           const freshSession = await getCurrentUserSession();
-          console.log('Refreshed session data:', freshSession);
           if (freshSession.authenticated && freshSession.session?.user?.email) {
             userEmail = freshSession.session.user.email;
-            console.log('Using email from refreshed session:', userEmail);
           }
         } catch (sessionError) {
           console.error('Error refreshing session:', sessionError);
@@ -199,7 +196,6 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
           const userId = await getUserIdByEmail(userEmail);
           if (userId) {
             currentUserId = userId;
-            console.log('Found user ID from database:', currentUserId);
           } else {
             console.warn('No user found with email:', userEmail);
           }
@@ -234,9 +230,6 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
           userId: data.wallet.userId || currentUserId
         };
         
-        console.log('Creating wallet with userId:', newWallet.userId);
-        console.log('Database save result from API:', data.dbSaved);
-
         // Save wallet to localStorage for immediate access
         saveWalletToLocalStorage(newWallet);
 
@@ -314,37 +307,19 @@ export function CdpWalletProvider({ children }: { children: ReactNode }) {
   // Load wallet from database, localStorage, or server session on component mount
   useEffect(() => {
     const fetchWallet = async () => {
-      console.log('Starting wallet fetch process...');
-      console.log('Session data:', session);
-      
-      // First try to get wallet from localStorage for quick loading
       const localWallet = getWalletFromLocalStorage();
-      console.log('Local wallet from localStorage:', localWallet);
-      
       if (localWallet) {
         setWallet(localWallet);
-        console.log('Set wallet from localStorage');
-        // Don't fetch token balances here - will be handled by the other useEffect
       }
 
-      // If user is authenticated, try to get wallet from server session (which now checks database first)
-      // Check for either user ID or email to handle both cases
       if (session?.user?.id || session?.user?.email) {
-        console.log('User is authenticated, fetching wallet from server session...');
         try {
-          console.log('Calling getWalletFromServerSession()...');
           const serverWallet = await getWalletFromServerSession();
-          console.log('Server wallet result:', serverWallet);
           
           if (serverWallet) {
-            // If we got a wallet from server/database that's different from localStorage or no localStorage wallet,
-            // update the state and localStorage
             if (!localWallet || serverWallet.id !== localWallet.id) {
-              console.log('Updating wallet from server session/database');
               setWallet(serverWallet);
-              // Also save to localStorage for faster access next time
               saveWalletToLocalStorage(serverWallet);
-              // Don't fetch token balances here - will be handled by the other useEffect
             } else {
               console.log('Server wallet matches localStorage wallet, no update needed');
             }

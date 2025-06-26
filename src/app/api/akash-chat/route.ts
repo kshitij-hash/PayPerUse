@@ -7,23 +7,12 @@ const openai = new OpenAI({
   baseURL: 'https://chatapi.akash.network/api/v1'
 });
 
-/**
- * Sleep for a specified number of milliseconds
- * @param ms Milliseconds to sleep
- * @returns Promise that resolves after the specified time
- */
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-/**
- * POST handler for /api/akash-chat
- * Generates text responses using AkashChat's API (OpenAI-compatible)
- */
 export async function POST(req: NextRequest) {
   try {
-    // Check for x402 payment JWT header (both uppercase and lowercase)
     const paymentHeader = req.headers.get('X-PAYMENT') || req.headers.get('x-payment');
     
-    // If the X-PAYMENT header is missing, return 402 Payment Required
     if (!paymentHeader) {
       return NextResponse.json(
         {
@@ -63,7 +52,6 @@ export async function POST(req: NextRequest) {
     try {
       // Parse the request body
       const body = await clonedReq.json();
-      console.log('Request body:', body);
       
       // Handle input from ServiceModal (which sends { input: string, model: string })
       // or direct API calls (which send { prompt: string, model: string })

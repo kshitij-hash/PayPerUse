@@ -40,6 +40,7 @@ const agentInputMapping: Record<string, string> = {
   write: "topic",
   text: "input",
   vision: "prompt",
+  "nft-minting-agent": "prompt",
 };
 
 interface AgentResponseData {
@@ -49,78 +50,101 @@ interface AgentResponseData {
   information?: string;
   relevantLaws?: string[];
   disclaimer?: string;
+  result?: string;
+  collectionDetails?: {
+    collectionName?: string;
+    nftName?: string;
+    description?: string;
+  };
   [key: string]: unknown; // For other potential properties
 }
 
-const agentResponseMapping: Record<string, (data: AgentResponseData) => string> = {
+const agentResponseMapping: Record<
+  string,
+  (data: AgentResponseData) => string
+> = {
   translate: (data) => {
     // Handle both result key (from API) and translatedText key (from interface)
-    return (typeof data.result === 'string' ? data.result : '') || data.translatedText || '';
+    return (
+      (typeof data.result === "string" ? data.result : "") ||
+      data.translatedText ||
+      ""
+    );
   },
   summarize: (data) => {
     if (typeof data === "string") return data;
-    return data.result as string || '';
+    return (data.result as string) || "";
   },
   "legal-assistant": (data) =>
     `**${data.jurisdiction || "Global"} Legal Information**
 
-${
-      data.information || ''
-    }
+${data.information || ""}
 
 **Relevant Laws:**
-${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
-      data.disclaimer
-    }*`,
+${data.relevantLaws?.join("\n") || "None available"}\n\n*${data.disclaimer}*`,
   "poetry-generator": (data) => {
     // Extract the components from the API response
     const title = data.title || "## Poem";
-    
+
     // Clean up the poem - remove the trailing marker if present
-    let poem = (data.poem as string) || '';
+    let poem = (data.poem as string) || "";
     // Remove any trailing markers or partial analysis headers from the poem
-    if (typeof poem === 'string') {
+    if (typeof poem === "string") {
       // Remove any trailing dashes and Poetic Elements text
-      poem = poem.replace(/---[\s\S]*?\*\*Poetic Elements.*$/g, '');
+      poem = poem.replace(/---[\s\S]*?\*\*Poetic Elements.*$/g, "");
       // Also check for just the Poetic Elements text without dashes
-      poem = poem.replace(/\*\*Poetic Elements.*$/g, '');
+      poem = poem.replace(/\*\*Poetic Elements.*$/g, "");
       // Trim any trailing whitespace
       poem = poem.trim();
     }
-    
+
     // Format the analysis with proper markdown heading
-    let analysis = '';
-    if (typeof data.analysis === 'string') {
+    let analysis = "";
+    if (typeof data.analysis === "string") {
       const analysisText = data.analysis;
-      
+
       // Check if analysis starts with "Analysis:**" pattern
-      if (analysisText.startsWith('Analysis:**')) {
+      if (analysisText.startsWith("Analysis:**")) {
         // Create a combined bold heading for "Poetic Elements Analysis"
-        analysis = '**Poetic Elements Analysis**\n' + analysisText.substring(11);
+        analysis =
+          "**Poetic Elements Analysis**\n" + analysisText.substring(11);
       } else {
-        analysis = '**Analysis**\n' + analysisText;
+        analysis = "**Analysis**\n" + analysisText;
       }
     }
-    
+
     // Combine everything with proper markdown formatting
     return `${title}\n\n${poem}\n\n${analysis}`;
   },
+  "nft-minting-agent": (data): string => {
+    return JSON.stringify(data);
+  },
   "code-assistant": (data) => {
     if (typeof data === "string") return data;
-    return (data.content as string) || (data.text as string) || JSON.stringify(data);
+    return (
+      (data.content as string) || (data.text as string) || JSON.stringify(data)
+    );
   },
   "research-assistant": (data) => {
     if (typeof data === "string") return data;
-    return (data.content as string) || (data.text as string) || JSON.stringify(data);
+    return (
+      (data.content as string) || (data.text as string) || JSON.stringify(data)
+    );
   },
   write: (data) => {
     if (typeof data === "string") return data;
-    return (data.content as string) || (data.text as string) || JSON.stringify(data);
+    return (
+      (data.content as string) || (data.text as string) || JSON.stringify(data)
+    );
   },
   text: (data) =>
-    typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
+    typeof data === "string"
+      ? data
+      : (data.output as string) || JSON.stringify(data),
   vision: (data) =>
-    typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
+    typeof data === "string"
+      ? data
+      : (data.output as string) || JSON.stringify(data),
 };
 
 export default function AgentChatPage() {
@@ -168,7 +192,9 @@ export default function AgentChatPage() {
     setError(null);
 
     try {
-      const payload: Record<string, string | number | boolean | object> = { ...additionalInputs };
+      const payload: Record<string, string | number | boolean | object> = {
+        ...additionalInputs,
+      };
       const primaryInputKey = agentInputMapping[agent.id] || "input";
       payload[primaryInputKey] = message;
 
@@ -204,7 +230,8 @@ export default function AgentChatPage() {
           const paymentMessage: ChatMessageType = {
             id: Date.now().toString(),
             role: "system",
-            content: "Payment required. Please check your wallet and try again.",
+            content:
+              "Payment required. Please check your wallet and try again.",
             paymentData,
             timestamp: new Date().toISOString(),
           };
@@ -277,16 +304,16 @@ export default function AgentChatPage() {
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -inset-[10px] opacity-30">
           {Array.from({ length: 20 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="absolute rounded-full bg-purple-500/10" 
+            <div
+              key={i}
+              className="absolute rounded-full bg-purple-500/10"
               style={{
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
                 width: `${Math.random() * 10 + 5}px`,
                 height: `${Math.random() * 10 + 5}px`,
                 animation: `pulse ${Math.random() * 5 + 3}s infinite`,
-                animationDelay: `${Math.random() * 5}s`
+                animationDelay: `${Math.random() * 5}s`,
               }}
             />
           ))}
@@ -314,23 +341,31 @@ export default function AgentChatPage() {
                 {agent?.name || "Agent Chat"}
               </h1>
               {agent?.provider && (
-                <p className="text-xs text-gray-400">Powered by {agent.provider}</p>
+                <p className="text-xs text-gray-400">
+                  Powered by {agent.provider}
+                </p>
               )}
             </div>
           </div>
           <div className="flex items-center space-x-3">
             <div className="hidden sm:block">
               <div className="px-3 py-1 rounded-full bg-purple-900/20 border border-purple-500/30 text-purple-300 text-xs font-medium animate-pulse">
-                {agent?.pricing?.amount ? `$${agent.pricing.amount} / request` : 'AI Agent'}
+                {agent?.pricing?.amount
+                  ? `$${agent.pricing.amount} / request`
+                  : "AI Agent"}
               </div>
             </div>
-            
+
             <WalletButton />
-            
+
             <div className="md:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-gray-400 hover:text-purple-400">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-purple-400"
+                  >
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
@@ -349,7 +384,11 @@ export default function AgentChatPage() {
 
         {/* Chat window */}
         <div className="flex-1 overflow-y-auto transition-all duration-300 ease-in-out">
-          <ChatWindow messages={messages} isLoading={isLoading} setMessages={setMessages} />
+          <ChatWindow
+            messages={messages}
+            isLoading={isLoading}
+            setMessages={setMessages}
+          />
         </div>
 
         {/* Input area */}

@@ -1,6 +1,58 @@
 {
   "services": [
     {
+      "id": "nft-minting-agent",
+      "name": "NFT Minting Agent",
+      "description": "Generate and mint NFTs from text prompts to the Base blockchain",
+      "endpoint": "/api/nft-minting-agent/generate-image",
+      "pricing": {
+        "amount": "0.15",
+        "currency": "USDC"
+      },
+      "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",
+      "provider": "PayPerUse",
+      "inputs": [
+        {
+          "name": "prompt",
+          "label": "Image Prompt",
+          "type": "textarea",
+          "placeholder": "Describe the NFT image you want to generate...",
+          "required": true,
+          "rows": 3
+        },
+        {
+          "name": "collectionName",
+          "label": "Collection Name",
+          "type": "text",
+          "placeholder": "Enter the name of your NFT collection",
+          "required": true
+        },
+        {
+          "name": "nftName",
+          "label": "NFT Name",
+          "type": "text",
+          "placeholder": "Enter a name for this NFT",
+          "required": true
+        },
+        {
+          "name": "description",
+          "label": "NFT Description",
+          "type": "textarea",
+          "placeholder": "Enter a description for your NFT",
+          "required": true,
+          "rows": 2
+        },
+        {
+          "name": "ticker",
+          "label": "Ticker/Symbol",
+          "type": "text",
+          "placeholder": "Enter token ticker/symbol (e.g., BTC, ETH)",
+          "description": "The ticker or symbol for your NFT collection",
+          "required": false
+        }
+      ]
+    },
+    {
       "id": "akash-chat",
       "name": "AkashChat Agent",
       "description": "Chat with various open-source AI models powered by the Akash Supercloud",

@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 const Page = async () => {
   const session = await auth();
-  console.log("Session:", session);
 
   if (session) {
     redirect("/user");

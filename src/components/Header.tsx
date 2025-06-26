@@ -80,17 +80,28 @@ export function WalletButton() {
     const storedWallet = getWalletFromLocalStorage();
     setWallet(storedWallet);
 
-    // Fetch balance if wallet exists
+    // Only fetch balance if wallet exists and has an address
     if (storedWallet?.address) {
       fetchBalance();
+    } else {
+      // Clear balance if no wallet
+      setBalance([]);
     }
 
     // Set up event listener for wallet changes
     const handleStorageChange = () => {
       const updatedWallet = getWalletFromLocalStorage();
+      
+      // Update wallet state
       setWallet(updatedWallet);
+      
+      // Only fetch balance if wallet exists and has an address
       if (updatedWallet?.address) {
         fetchBalance();
+      } else {
+        // Clear balance if wallet was removed
+        setBalance([]);
+        setError(null);
       }
     };
 

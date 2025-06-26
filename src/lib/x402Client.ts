@@ -20,8 +20,6 @@ export async function callPaidApi<T>(
   walletAddress?: string
 ): Promise<T> {
   try {
-    console.log(`callPaidApi - Starting API call to ${endpoint} with wallet ${walletId}`);
-    
     // Call the server-side proxy endpoint
     const response = await fetch('/api/x402-proxy', {
       method: 'POST',
@@ -43,7 +41,6 @@ export async function callPaidApi<T>(
     }
     
     const result = await response.json();
-    console.log(`callPaidApi - Successful response from ${endpoint}`);
     return result as T;
   } catch (error) {
     console.error(`callPaidApi - Error calling ${endpoint}:`, error);

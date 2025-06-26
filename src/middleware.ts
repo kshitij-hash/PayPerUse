@@ -64,13 +64,24 @@ const baseMiddleware = paymentMiddleware(
       network: "base-sepolia",
       config: { description: "Legal assistant service using Gemini AI" },
     },
+    "/api/nft-minting-agent/generate-image": {
+      price: "$0.15",
+      network: "base-sepolia",
+      config: { description: "NFT Minting Agent - Image Generation" },
+    },
   },
   {
     url: "https://x402.org/facilitator",
   }
 );
 
-const PUBLIC_ROUTES = ["/", "/sign-in", "/api/auth/callback/google", "/services", "/api/services"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/sign-in",
+  "/api/auth/callback/google",
+  "/services",
+  "/api/services",
+];
 
 export default auth((req) => {
   const pathname = req.nextUrl.pathname;
@@ -87,7 +98,8 @@ export default auth((req) => {
     "/api/research-assistant",
     "/api/poetry-generator",
     "/api/akash-chat",
-    "/api/legal-assistant"
+    "/api/legal-assistant",
+    "/api/nft-minting-agent/generate-image",
   ];
 
   const isPaidApiRoute = paidApiRoutes.some((route) =>
@@ -96,7 +108,6 @@ export default auth((req) => {
 
   // For paid API routes, bypass auth check and go straight to payment middleware
   if (isPaidApiRoute) {
-    console.log(`Bypassing auth check for paid API route: ${pathname}`);
     return baseMiddleware(req);
   }
 
@@ -107,17 +118,9 @@ export default auth((req) => {
 
   // Get session from auth
   const session = req.auth;
-
-  // Add debug info but don't log the entire session object
-  console.log(
-    `Middleware: Path ${pathname}, Auth ${session ? "exists" : "null"}`
-  );
-
+  
   // Redirect unauthenticated users
   if (!session) {
-    console.log(
-      `Redirecting unauthenticated user from ${pathname} to /sign-in`
-    );
     const loginUrl = new URL("/sign-in", req.nextUrl.origin);
     return NextResponse.redirect(loginUrl);
   }
@@ -129,6 +132,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|api/auth).*)",
-    "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat)(/.*)?",
+    "/api/(summarize|translate|generate-image|text-generation|vision-analysis|write|code-assistant|research-assistant|poetry-generator|akash-chat|legal-assistant|nft-minting-agent)(/.*)?",
   ],
 };

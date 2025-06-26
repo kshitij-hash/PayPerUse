@@ -110,8 +110,6 @@ export async function getCurrentUserSession() {
     const response = await fetch("/api/session");
     const data = await response.json();
     
-    console.log('Session API response:', data);
-    
     if (!data || !data.authenticated) {
       return { authenticated: false };
     }
@@ -332,23 +330,16 @@ export async function removeWalletFromServerSession(): Promise<boolean> {
  */
 export async function getWalletFromServerSession(): Promise<SessionWallet | null> {
   try {
-    console.log('Fetching wallet from server session API...');
     const response = await fetch("/api/wallet-session");
-    console.log('Wallet session API response status:', response.status);
-
     if (!response.ok) {
-      console.warn('Wallet session API returned non-OK status:', response.status);
       return null;
     }
 
     const data = await response.json();
-    console.log('Wallet session API response data:', data);
     
     if (data.wallet) {
-      console.log('Wallet found in server session/database');
       return data.wallet;
     } else {
-      console.log('No wallet found in server session/database');
       return null;
     }
   } catch (error) {
