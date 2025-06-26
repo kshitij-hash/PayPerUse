@@ -129,11 +129,11 @@ export default async function User() {
                 </div>
               </Card>
             ) : (
-              <Card className="h-full flex items-center justify-center bg-gray-900/30 border border-gray-800/50 backdrop-blur-sm">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-white">No Files Uploaded</CardTitle>
-                  <CardDescription className="text-gray-400">You haven&apos;t uploaded any files to Pinata yet.</CardDescription>
-                </CardHeader>
+              <Card className="h-full flex flex-col items-center justify-center bg-gray-900/30 border border-gray-800/50 backdrop-blur-sm">
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <h2 className="text-2xl font-bold text-white mb-2">No Files Uploaded</h2>
+                  <p className="text-gray-400 mb-2">You haven&apos;t uploaded any files to Pinata yet.</p>
+                </div>
               </Card>
             )}
           </div>

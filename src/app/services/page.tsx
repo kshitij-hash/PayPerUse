@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Bot, Code, Terminal } from "lucide-react";
+import { ArrowRight, Bot } from "lucide-react";
 
 interface InputField {
   name: string;
@@ -94,13 +94,16 @@ export default function ServicesPage() {
             Available Services
           </h1>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Explore our collection of powerful APIs and integrate them into your workflows to supercharge your applications.
+            Explore our collection of powerful APIs and integrate them into your
+            workflows to supercharge your applications.
           </p>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => <ServiceSkeleton key={i} />)}
+            {[...Array(3)].map((_, i) => (
+              <ServiceSkeleton key={i} />
+            ))}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -114,33 +117,40 @@ export default function ServicesPage() {
                     <div className="h-12 w-12 bg-purple-600/20 border border-purple-500/30 rounded-lg flex items-center justify-center">
                       <Bot className="h-6 w-6 text-purple-400" />
                     </div>
-                    <Badge variant="secondary" className="bg-purple-600/20 text-purple-400 border-purple-500/30">
+                    <Badge
+                      variant="secondary"
+                      className="bg-purple-600/20 text-purple-400 border-purple-500/30"
+                    >
                       {service.pricing.amount} {service.pricing.currency}
                     </Badge>
                   </div>
-                  <CardTitle className="text-white">{service.name}</CardTitle>
-                  <CardDescription className="text-gray-400 h-20 overflow-hidden">
+                  <CardTitle className="text-white text-xl">
+                    {service.name}
+                  </CardTitle>
+                  <CardDescription className="text-gray-400 mt-2">
                     {service.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex-grow">
-                  <div className="text-sm text-gray-400 space-y-2">
-                    <div className="flex items-center">
-                      <Code className="h-4 w-4 mr-2" />
-                      <span className="font-mono truncate">{service.endpoint}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Terminal className="h-4 w-4 mr-2" />
-                      <span className="font-mono truncate">{service.id}</span>
-                    </div>
+                <CardContent className="flex-grow pt-2">
+                  <div className="text-sm text-gray-500">
+                    <p>
+                      Provider:{" "}
+                      <span className="text-purple-400">
+                        {service.provider}
+                      </span>
+                    </p>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t border-gray-800/50 pt-4 mt-4 flex justify-between items-center">
-                  {/* <Button variant="outline" className="border-gray-700 hover:bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:text-white hover:transition-all hover:duration-300 hover:transform hover:cursor-pointer">
-                    View Details
-                  </Button> */}
+                <CardFooter className="border-t border-gray-800/50 pt-4 flex justify-between items-center">
+                  <div className="text-xs text-gray-500">
+                    {service.inputs && service.inputs.length > 0
+                      ? `${service.inputs.length} input field${
+                          service.inputs.length > 1 ? "s" : ""
+                        }`
+                      : "No input required"}
+                  </div>
                   <Link href={`/chat/${service.id}`} passHref>
-                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105 hover:cursor-pointer">
+                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 transform hover:cursor-pointer">
                       Try It <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>

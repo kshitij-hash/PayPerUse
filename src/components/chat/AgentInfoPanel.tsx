@@ -49,12 +49,12 @@ const AgentInfoPanel: React.FC<AgentInfoPanelProps> = ({ agent }) => {
       'Adapts to different tones and styles',
       'Incorporates specified keywords',
     ],
-    'gemini-text': [
+    'text': [
       'Generates text based on prompts',
       'Creates creative and informative content',
       'Responds to complex instructions',
     ],
-    'gemini-vision': [
+    'vision': [
       'Analyzes images and provides descriptions',
       'Extracts information from visual content',
       'Responds to prompts about images',

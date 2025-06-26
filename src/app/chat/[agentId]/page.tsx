@@ -38,8 +38,8 @@ const agentInputMapping: Record<string, string> = {
   "code-assistant": "query",
   "research-assistant": "topic",
   write: "topic",
-  "gemini-text": "input",
-  "gemini-vision": "prompt",
+  text: "input",
+  vision: "prompt",
 };
 
 interface AgentResponseData {
@@ -117,9 +117,9 @@ ${data.relevantLaws?.join("\n") || 'None available'}\n\n*${
     if (typeof data === "string") return data;
     return (data.content as string) || (data.text as string) || JSON.stringify(data);
   },
-  "gemini-text": (data) =>
+  text: (data) =>
     typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
-  "gemini-vision": (data) =>
+  vision: (data) =>
     typeof data === "string" ? data : (data.output as string) || JSON.stringify(data),
 };
 
