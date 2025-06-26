@@ -3,10 +3,10 @@
     {
       "id": "nft-minting-agent",
       "name": "NFT Minting Agent",
-      "description": "Generate and mint NFTs from text prompts to the Base blockchain",
-      "endpoint": "/api/nft-minting-agent/generate-image",
+      "description": "Generate and mint NFTs from text prompts to the Base blockchain, using Amazon Bedrock for image generation",
+      "endpoint": "https://payperuse.online/api/nft-minting-agent/generate-image",
       "pricing": {
-        "amount": "0.15",
+        "amount": "0.5",
         "currency": "USDC"
       },
       "payoutAddress": "0x9D9e34611ab141a704d24368E8C0E900FbE7b0DF",

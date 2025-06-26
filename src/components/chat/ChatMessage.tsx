@@ -16,6 +16,25 @@ import { useSession } from "next-auth/react";
 import { ChatMessage as ChatMessageType } from "../../types";
 import { Dispatch, SetStateAction } from "react";
 
+interface DeploymentData {
+  contractAddress?: string;
+  deployerAddress?: string;
+  name?: string;
+  symbol?: string;
+  recipientAddress?: string;
+  quantity?: string;
+  success?: boolean;
+  networkId?: string;
+  transaction?: {
+    transaction_hash?: string;
+    transaction_link?: string;
+    status?: string;
+    network_id?: string;
+    from_address_id?: string;
+  };
+  wallet_id?: string;
+}
+
 interface ChatMessageProps extends ChatMessageType {
   setMessages: Dispatch<SetStateAction<ChatMessageType[]>>;
 }
@@ -62,6 +81,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
   const [metadataUri, setMetadataUri] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<number>(step);
   const [processingStep, setProcessingStep] = useState<string | null>(null);
+  const [deploymentData, setDeploymentData] = useState<DeploymentData | null>(
+    null
+  );
+  const [recipientWalletAddress, setRecipientWalletAddress] = useState<string>(
+    collectionDetails?.recipientAddress || ""
+  );
 
   // Upload image to IPFS (Step 2)
   const uploadToIpfs = async () => {
@@ -111,6 +136,83 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred";
       alert(`Error uploading to IPFS: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+      setProcessingStep(null);
+    }
+  };
+
+  // Deploy and Mint NFT (Step 4)
+  const deployNFT = async () => {
+    setProcessingStep("deploy-nft");
+    setIsUploading(true);
+    try {
+      // Use the recipient address from the input field
+      const recipientAddress = recipientWalletAddress || collectionDetails?.recipientAddress;
+      
+      if (!recipientAddress) {
+        throw new Error("Recipient wallet address is required");
+      }
+
+      const response = await fetch("/api/nft-minting-agent/deploy-nft", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: collectionDetails?.collectionName || "NFT Collection",
+          symbol: collectionDetails?.symbol || "NFT",
+          baseURI: metadataUri || nftData?.metadataUri,
+          recipientAddress: recipientAddress,
+          quantity: "1",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to deploy NFT");
+      }
+
+      const data = await response.json();
+      console.log("NFT Deployment Response:", data);
+      setDeploymentData(data);
+      setCurrentStep(4); // Move to step 4
+
+      const successMessage: ChatMessageType = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: JSON.stringify({
+          result: `NFT deployed and minted successfully! Contract address: ${data.contractAddress} on ${data.transaction?.network_id || 'blockchain'}`,
+          recipientAddress: recipientWalletAddress,
+          collectionDetails,
+          step: 4,
+          nextStep: null,
+          nftData: {
+            imageUri: ipfsUrl || nftData?.imageUri,
+            imageIpfsHash: imageIpfsHash || nftData?.imageIpfsHash,
+            metadataUri: metadataUri || nftData?.metadataUri,
+            metadataIpfsHash: nftData?.metadataIpfsHash,
+            contractAddress: data.contractAddress,
+            deployerAddress: data.deployerAddress,
+            networkId: data.transaction?.network_id,
+            transactionHash: data.transaction?.transaction_hash,
+            transactionLink: data.transaction?.transaction_link,
+            walletId: data.wallet_id,
+            symbol: data.symbol,
+            name: data.name,
+            quantity: data.quantity,
+          },
+          deploymentData: data,
+        }),
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prevMessages) => [...prevMessages, successMessage]);
+    } catch (error) {
+      console.error(error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      alert(`Error deploying NFT: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       setProcessingStep(null);
@@ -269,10 +371,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                     currentStep >= 3 ? "bg-green-500" : "bg-gray-500"
                   }`}
                 ></div>
+                <div
+                  className={`h-0.5 w-4 ${
+                    currentStep >= 4 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    currentStep >= 4 ? "bg-green-500" : "bg-gray-500"
+                  }`}
+                ></div>
                 <span className="text-xs text-gray-400 ml-2">
                   {currentStep === 1 && "Step 1: Image Generated"}
                   {currentStep === 2 && "Step 2: Uploaded to IPFS"}
                   {currentStep === 3 && "Step 3: Metadata Created"}
+                  {currentStep === 4 && "Step 4: NFT Deployed"}
                 </span>
               </div>
 
@@ -334,10 +447,107 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 </div>
               )}
 
+              {/* Step 4: Deploy and Mint NFT - show if we're at step 3 */}
+              {(currentStep === 3 ||
+                (nftData?.metadataUri && !nftData?.contractAddress)) && (
+                <div className="space-y-3 mt-2">
+                  <div className="flex flex-col space-y-2">
+                    <label htmlFor="recipient-address" className="text-xs text-gray-300">
+                      Recipient Wallet Address:
+                    </label>
+                    <input
+                      id="recipient-address"
+                      type="text"
+                      value={recipientWalletAddress}
+                      onChange={(e) => setRecipientWalletAddress(e.target.value)}
+                      placeholder="Enter wallet address (0x...)"
+                      className="bg-gray-800/50 border border-purple-500/30 rounded px-3 py-2 text-sm text-white w-full focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                    />
+                  </div>
+                  <Button
+                    onClick={deployNFT}
+                    disabled={isUploading || processingStep === "deploy-nft" || !recipientWalletAddress}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full"
+                  >
+                    {processingStep === "deploy-nft"
+                      ? "Deploying & Minting NFT..."
+                      : "Deploy & Mint NFT"}
+                  </Button>
+                </div>
+              )}
+
               {/* If we have complete NFT data from the response, show that instead */}
-              {nftData && nftData.metadataUri && (
+              {nftData && nftData.metadataUri && !nftData.contractAddress && (
                 <div className="mt-2 text-sm text-green-400">
-                  <p>NFT creation complete!</p>
+                  <p>NFT metadata creation complete! Ready to deploy.</p>
+                </div>
+              )}
+
+              {/* Show deployment details if available */}
+              {(deploymentData || nftData?.contractAddress) && (
+                <div className="mt-4 p-3 bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-500/30 rounded-md">
+                  <h4 className="text-md font-medium text-green-300 mb-1">
+                    NFT Deployment Successful!
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 mt-2 text-xs">
+                    <div className="flex justify-between items-center bg-green-900/30 p-2 rounded">
+                      <span className="text-green-200">Contract Address:</span>
+                      <span className="text-green-300 font-mono">
+                        {deploymentData?.contractAddress ||
+                          nftData?.contractAddress}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center bg-green-900/30 p-2 rounded">
+                      <span className="text-green-200">Network:</span>
+                      <span className="text-green-300">
+                        {deploymentData?.transaction?.network_id || nftData?.networkId || "base-sepolia"}
+                      </span>
+                    </div>
+                    
+                    {(deploymentData?.transaction?.transaction_hash || nftData?.transactionHash) && (
+                      <div className="flex justify-between items-center bg-green-900/30 p-2 rounded">
+                        <span className="text-green-200">Transaction Hash:</span>
+                        <span className="text-green-300 font-mono text-xs truncate max-w-[180px]">
+                          {deploymentData?.transaction?.transaction_hash || nftData?.transactionHash}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {(deploymentData?.name || nftData?.name) && (
+                      <div className="flex justify-between items-center bg-green-900/30 p-2 rounded">
+                        <span className="text-green-200">Collection Name:</span>
+                        <span className="text-green-300">
+                          {deploymentData?.name || nftData?.name}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {(deploymentData?.symbol || nftData?.symbol) && (
+                      <div className="flex justify-between items-center bg-green-900/30 p-2 rounded">
+                        <span className="text-green-200">Symbol:</span>
+                        <span className="text-green-300">
+                          {deploymentData?.symbol || nftData?.symbol}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {(deploymentData?.transaction?.transaction_link ||
+                      nftData?.transactionLink) && (
+                      <a
+                        href={
+                          deploymentData?.transaction?.transaction_link ||
+                          nftData?.transactionLink
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs bg-green-900/40 hover:bg-green-800/50 text-green-300 py-1 px-2 rounded flex items-center justify-between mt-2"
+                      >
+                        <span>View Transaction on {deploymentData?.transaction?.network_id || nftData?.networkId || "Explorer"}</span>
+                        <span className="text-green-400">→</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
