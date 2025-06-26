@@ -81,6 +81,8 @@ const PUBLIC_ROUTES = [
   "/api/auth/callback/google",
   "/services",
   "/api/services",
+  "/creators",
+  "/developers"
 ];
 
 export default auth((req) => {

@@ -224,9 +224,25 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-4">
           {pathname !== "/services" && <Link href="/services" passHref>
             <Button
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:text-white hover:shadow-purple-500/40 transition-all duration-300 transform hover:scale-105 hover:cursor-pointer"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:text-white hover:shadow-purple-500/40 transition-all duration-300 transform hover:cursor-pointer"
             >
               Services
+            </Button>
+          </Link>}
+          {pathname !== "/creators" && <Link href="/creators" passHref>
+            <Button
+              variant="outline"
+              className="text-purple-400 border-purple-500/30 hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 transform hover:cursor-pointer"
+            >
+              For Creators
+            </Button>
+          </Link>}
+          {pathname !== "/developers" && <Link href="/developers" passHref>
+            <Button
+              variant="outline"
+              className="text-purple-400 border-purple-500/30 hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 transform hover:cursor-pointer"
+            >
+              For Developers
             </Button>
           </Link>}
           {status === "authenticated" && <WalletButton />}

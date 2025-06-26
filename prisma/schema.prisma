@@ -111,3 +111,16 @@ model PinataFile {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
+
+model Application {
+  id          String    @id @default(cuid())
+  type        String    // "creator" or "developer"
+  name        String
+  email       String
+  company     String?
+  status      String    // "pending", "approved", "rejected"
+  metadata    Json      // Stores different fields based on application type
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
